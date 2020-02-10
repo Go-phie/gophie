@@ -5,7 +5,9 @@ import (
 	"gophie/pkg/scraper"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/abiosoft/ishell"
 	"github.com/gocolly/colly/v2"
 )
 
@@ -57,19 +59,30 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// example usage: curl -s 'http://127.0.0.1:7171/?url=http://go-colly.org/'
+	//  site := new(scraper.NetNaija)
+	//  site.Search("Good boys")
+	shell := ishell.New()
 
-	site := new(scraper.Tfpdl)
+	// display welcome info.
+	shell.Println("Gophie Shell")
 
-	site.Query = "IT 2"
+	// register a function for "greet" command.
+	shell.AddCmd(&ishell.Cmd{
+		Name: "search",
+		Help: "search for movie",
+		Func: func(c *ishell.Context) {
+			site := new(scraper.NetNaija)
+			site.Search(strings.Join(c.Args, " "))
+			choices := []string{}
+			for _, i := range site.Movies {
+				choices = append(choices, i.Title)
+			}
+			choice := c.MultiChoice(choices, "Which do you want to download?")
 
-	site.SafetextlinkSearch()
-	site.GetDownloadLinks(0)
+			c.Println(site.Movies[choice].DownloadLink)
+		},
+	})
 
-	//  addr := ":7171"
-
-	//  http.HandleFunc("/", handler)
-
-	//  log.Println("listening on", addr)
-	//  log.Fatal(http.ListenAndServe(addr, nil))
+	// run shell
+	shell.Run()
 }
