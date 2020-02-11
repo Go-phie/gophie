@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/abiosoft/ishell"
+	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	"gophie/pkg/scraper"
 	"log"
 	"net/http"
+	"os"
 	"strings"
-
-	"github.com/abiosoft/ishell"
-	"github.com/gocolly/colly/v2"
 )
 
 type pageInfo struct {
@@ -17,69 +18,83 @@ type pageInfo struct {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	URL := r.URL.Query().Get("url")
-	if URL == "" {
-		log.Println("missing URL argument")
+	search := r.URL.Query().Get("search")
+	if search == "" {
+		log.Println("missing search argument")
 		return
 	}
-	log.Println("visiting", URL)
-
-	c := colly.NewCollector()
-
-	p := &pageInfo{Links: make(map[string]int)}
-
-	// count links
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Request.AbsoluteURL(e.Attr("href"))
-		if link != "" {
-			p.Links[link]++
-		}
-	})
-
-	// extract status code
-	c.OnResponse(func(r *colly.Response) {
-		log.Println("response received", r.StatusCode)
-		p.StatusCode = r.StatusCode
-	})
-	c.OnError(func(r *colly.Response, err error) {
-		log.Println("error:", r.StatusCode, err)
-		p.StatusCode = r.StatusCode
-	})
-
-	c.Visit(URL)
+	log.Println("searching for", search)
+	query := strings.ReplaceAll(search, "+", " ")
+	site := new(scraper.NetNaija)
+	site.Search(query)
 
 	// dump results
-	b, err := json.Marshal(p)
+	b, err := json.Marshal(site.Movies)
 	if err != nil {
 		log.Println("failed to serialize response:", err)
 		return
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(b)
+	log.Println("Completed search for", search)
 }
 
 func main() {
 	//  site := new(scraper.NetNaija)
 	//  site.Search("Good boys")
+	red := color.New(color.FgRed).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
 	shell := ishell.New()
 
 	// display welcome info.
 	shell.Println("Gophie Shell")
 
-	// register a function for "greet" command.
+	// register a function for "search" command.
 	shell.AddCmd(&ishell.Cmd{
 		Name: "search",
 		Help: "search for movie",
 		Func: func(c *ishell.Context) {
+			display := ishell.ProgressDisplayCharSet(spinner.CharSets[39])
+			c.ProgressBar().Display(display)
+			c.ProgressBar().Start()
 			site := new(scraper.NetNaija)
 			site.Search(strings.Join(c.Args, " "))
 			choices := []string{}
 			for _, i := range site.Movies {
 				choices = append(choices, i.Title)
 			}
-			choice := c.MultiChoice(choices, "Which do you want to download?")
+			c.ProgressBar().Stop()
+			if len(choices) > 0 {
+				choice := c.MultiChoice(choices, yellow("Which do you want to download?"))
+				c.Println(site.Movies[choice].DownloadLink)
+			} else {
+				c.Println(red("Could not find any match"))
+			}
 
-			c.Println(site.Movies[choice].DownloadLink)
+		},
+	})
+
+	// register a function for the API command
+	shell.AddCmd(&ishell.Cmd{
+		Name: "api",
+		Help: "host gophie as an API on a PORT env variable, fallback to set argument",
+		Func: func(c *ishell.Context) {
+			port := strings.Join(c.Args, "")
+			portByEnv := os.Getenv("PORT")
+			if len(portByEnv) > 0 {
+				c.Println(yellow("Found PORT env, overriding api argument"))
+				port = ":" + portByEnv
+			} else {
+				if port == "" {
+					c.Println(red("PORT must be set or an argument passed to api subcommand"))
+					return
+				}
+				port = ":" + port
+			}
+
+			http.HandleFunc("/", handler)
+			c.Println("listening on", port)
+			log.Fatal(http.ListenAndServe(port, nil))
 		},
 	})
 

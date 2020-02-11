@@ -28,8 +28,7 @@ type NetNaijaMovie struct {
 	Size         string
 }
 
-func (movie *NetNaijaMovie) getdownloadlink() {
-	c := colly.NewCollector()
+func (movie *NetNaijaMovie) getdownloadlink(c *colly.Collector) {
 	formerdownloadlink := movie.DownloadLink
 	c.OnHTML("button[id=download-button]", func(inn *colly.HTMLElement) {
 		movie.Size = strings.TrimSpace(inn.ChildText("span.size"))
@@ -97,7 +96,7 @@ func (site *NetNaija) Search(Query string) {
 	c.Visit(url)
 
 	for _, movie := range site.Movies {
-		movie.getdownloadlink()
+		movie.getdownloadlink(c)
 	}
 
 }
