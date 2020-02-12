@@ -6,6 +6,8 @@ Search and download movies without having to bump into ads. Feel free to add any
 
 [![Documentation](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/bisoncorps/gophie)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bisoncorps/gophie)](https://goreportcard.com/report/github.com/bisoncorps/gophie)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://travis-ci.org/bisoncorps/gophie.svg?branch=master)](https://travis-ci.org/bisoncorps/gophie)
 
 ## Binaries
 
@@ -61,15 +63,15 @@ curl -s 'http://127.0.0.1:9000/?search=good+boys'
 
 ## Deployed
 
-Deployed version is hosted [here](#)
+Deployed version is hosted [here](https://gophie.herokuapp.com)
 
 ## Todo 
 
 - [x] Create cli and api
 - [x] Fix NetNaija link issue
-- [ ] Setup CI/CD pipeline to autodeploy
+- [x] Setup CI/CD pipeline to autodeploy
 - [x] Patch download pkg into CLI with progress bar
-- [ ] Host API on Heroku
+- [x] Host API on Heroku
 - [x] Update README
 - [x] Generate binaries for all platforms
 - [x] Write initial tests

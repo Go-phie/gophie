@@ -1,2 +1,1 @@
-release: go build
-web: bin/gophie exit api
+web: ./bin/main exit api
