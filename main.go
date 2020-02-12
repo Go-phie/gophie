@@ -5,6 +5,7 @@ import (
 	"github.com/abiosoft/ishell"
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"gophie/lib/downloader"
 	"gophie/pkg/scraper"
 	"log"
 	"net/http"
@@ -13,10 +14,11 @@ import (
 	"strings"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	if search == "" {
 		log.Println("missing search argument")
+		http.Error(w, "search argument is missing in url", http.StatusForbidden)
 		return
 	}
 	log.Println("searching for", search)
@@ -36,21 +38,19 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	//  site := new(scraper.NetNaija)
-	//  site.Search("Good boys")
 	red := color.New(color.FgRed).SprintFunc()
 	yellow := color.New(color.FgYellow).SprintFunc()
 	shell := ishell.New()
 
 	// display welcome info.
-	shell.Println("Gophie Shell")
+	shell.Println("Gophie Movie Downloader Shell")
 
 	// register a function for "search" command.
 	shell.AddCmd(&ishell.Cmd{
 		Name: "search",
 		Help: "search for movie",
 		Func: func(c *ishell.Context) {
-			display := ishell.ProgressDisplayCharSet(spinner.CharSets[39])
+			display := ishell.ProgressDisplayCharSet(spinner.CharSets[35])
 			c.ProgressBar().Display(display)
 			c.ProgressBar().Start()
 			site := new(scraper.NetNaija)
@@ -67,7 +67,18 @@ func main() {
 				if site.Movies[choice].Series {
 					c.Println("This is a series")
 				} else {
-					c.Println(site.Movies[choice].DownloadLink)
+					url := site.Movies[choice].DownloadLink
+					downloadhandler := &downloader.FileDownloader{
+						URL: url,
+						Mb:  0.0,
+					}
+					if file := downloadhandler.Filesize(); file != 0.0 {
+						c.Println("Starting Download ==> Size: ", downloadhandler.Mb, "MB")
+						err := downloadhandler.DownloadFile(c)
+						if err != nil {
+							c.Println(red(err))
+						}
+					}
 				}
 			} else {
 				c.Println(red("Could not find any match"))
@@ -94,12 +105,16 @@ func main() {
 				port = ":" + port
 			}
 
-			http.HandleFunc("/", handler)
+			http.HandleFunc("/", Handler)
 			log.Println("listening on", port)
 			log.Fatal(http.ListenAndServe(port, nil))
 		},
 	})
 
 	// run shell
-	shell.Run()
+	if len(os.Args) > 1 && os.Args[1] == "exit" {
+		shell.Process(os.Args[2:]...)
+	} else {
+		shell.Run()
+	}
 }

@@ -1,13 +1,19 @@
 # Gophie
 
-Search and download movies without the ads or having to stare at naked butts
+Search and download movies without having to bump into ads. Feel free to add any new movie sites
 
 ![Demo](assets/reel.jpeg)
 
 [![Documentation](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/bisoncorps/gophie)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bisoncorps/gophie)](https://goreportcard.com/report/github.com/bisoncorps/gophie)
 
-## Usage
+## Binaries
+
+- Windows - [64 bit](bin/windows/64-bit/gophie)
+- Windows - [32-bit](bin/windows/32-bit/gophie)
+- Linux - [x86_64](bin/linux/x86-64/gophie)
+
+### Usage
 
 gophie
 
@@ -60,13 +66,14 @@ Deployed version is hosted [here](#)
 ## Todo 
 
 - [x] Create cli and api
-- [ ] Fix NetNaija link issue
+- [x] Fix NetNaija link issue
 - [ ] Setup CI/CD pipeline to autodeploy
-- [ ] Patch download pkg into CLI with progress bar
+- [x] Patch download pkg into CLI with progress bar
 - [ ] Host API on Heroku
-- [ ] Update README
-- [ ] Generate binaries for all platforms
-- [ ] Write tests
+- [x] Update README
+- [x] Generate binaries for all platforms
+- [x] Write initial tests
+- [ ] Increment tests
 - [ ] Create React app to consume hosted API
 
 ## License (MIT)
