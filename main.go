@@ -9,13 +9,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
-
-type pageInfo struct {
-	StatusCode int
-	Links      map[string]int
-}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
@@ -61,12 +57,18 @@ func main() {
 			site.Search(strings.Join(c.Args, " "))
 			choices := []string{}
 			for _, i := range site.Movies {
-				choices = append(choices, i.Title)
+				if i.Title != "" {
+					choices = append(choices, strconv.Itoa(1+i.Index)+" "+i.Title)
+				}
 			}
 			c.ProgressBar().Stop()
 			if len(choices) > 0 {
 				choice := c.MultiChoice(choices, yellow("Which do you want to download?"))
-				c.Println(site.Movies[choice].DownloadLink)
+				if site.Movies[choice].Series {
+					c.Println("This is a series")
+				} else {
+					c.Println(site.Movies[choice].DownloadLink)
+				}
 			} else {
 				c.Println(red("Could not find any match"))
 			}
@@ -93,7 +95,7 @@ func main() {
 			}
 
 			http.HandleFunc("/", handler)
-			c.Println("listening on", port)
+			log.Println("listening on", port)
 			log.Fatal(http.ListenAndServe(port, nil))
 		},
 	})

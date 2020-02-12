@@ -38,7 +38,15 @@ listening on :9000
 
 # use the following to search for "good boys" on the hosted api
 curl -s 'http://127.0.0.1:9000/?search=good+boys'
-[{"Index":0,"Title":"Good Boys (2019)","PictureLink":"https://img.netnaija.com/-c2HHK.jpg","Description":...}...]
+[
+  {
+    "Index":0,
+    "Title":"Good Boys (2019)",
+    "PictureLink":"https://img.netnaija.com/-c2HHK.jpg",
+    "Description":...
+  },
+  ...
+]
 
 2020/02/11 01:45:42 searching for good boys
 2020/02/11 01:45:50 Completed search for good boys
@@ -52,14 +60,19 @@ Deployed version is hosted [here](#)
 ## Todo 
 
 - [x] Create cli and api
-- [ ] Setup CI/CD pipeline to autodeploy
 - [ ] Fix NetNaija link issue
+- [ ] Setup CI/CD pipeline to autodeploy
 - [ ] Patch download pkg into CLI with progress bar
 - [ ] Host API on Heroku
 - [ ] Update README
 - [ ] Generate binaries for all platforms
 - [ ] Write tests
 - [ ] Create React app to consume hosted API
+
+## License (MIT)
+
+This project is opened under the [MIT 2.0 License](https://github.com/bisoncorps/gophie/blob/master/LICENSE) which allows very broad use for both academic and commercial purposes.
+
 
 ## Credits
 Library | Use

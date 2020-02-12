@@ -20,16 +20,21 @@ type TfpdlMovie struct {
 
 //NetNaijaMovie : describing a single netnaija movie scraper
 type NetNaijaMovie struct {
-	Index        int
-	Title        string
-	PictureLink  string
-	Description  string
-	DownloadLink string
-	Size         string
+	Index         int
+	Title         string
+	PictureLink   string
+	Description   string
+	DownloadLink  string
+	SDownloadLink []string
+	Size          string
+	Series        bool
 }
 
 func (movie *NetNaijaMovie) getdownloadlink(c *colly.Collector) {
 	formerdownloadlink := movie.DownloadLink
+	if strings.HasPrefix(formerdownloadlink, "https://www.thenetnaija.com/videos/series/") {
+		movie.Series = true
+	}
 	c.OnHTML("button[id=download-button]", func(inn *colly.HTMLElement) {
 		movie.Size = strings.TrimSpace(inn.ChildText("span.size"))
 	})
@@ -43,6 +48,15 @@ func (movie *NetNaijaMovie) getdownloadlink(c *colly.Collector) {
 			movie.DownloadLink = inner.ChildAttr("input", "value")
 		}
 	})
+
+	//for series or parts
+	c.OnHTML("div.video-series-latest-episodes", func(inn *colly.HTMLElement) {
+		movie.Series = true
+		inn.ForEach("a", func(_ int, e *colly.HTMLElement) {
+			movie.SDownloadLink = append(movie.SDownloadLink, e.Attr("href")+"/download")
+		})
+	})
+
 	c.Visit(formerdownloadlink)
 	if formerdownloadlink == movie.DownloadLink {
 		movie.Size = "Unknown"
@@ -74,31 +88,45 @@ func (site *NetNaija) Search(Query string) {
 	c.OnHTML("main", func(e *colly.HTMLElement) {
 		e.ForEach("article", func(_ int, el *colly.HTMLElement) {
 			movie := NetNaijaMovie{
-				Index:        movieIndex,
+				Index:        0,
 				Title:        "",
 				PictureLink:  "",
 				Description:  "",
 				DownloadLink: "",
 				Size:         "",
+				Series:       false,
 			}
 
 			movie.PictureLink = el.ChildAttr("img", "src")
 			movie.Title = strings.TrimSpace(strings.TrimPrefix(el.ChildText("h3.result-title"), "Movie:"))
 			movie.Description = strings.TrimSpace(el.ChildText("p.result-desc"))
-			innerlink := el.ChildAttr("a", "href") + "/download"
+			href := el.ChildAttr("a", "href")
+			innerlink := href + "/download"
+
 			movie.DownloadLink = innerlink
-			site.Movies = append(site.Movies, movie)
-			movieIndex++
+			if movie.Title != "" {
+				movie.Index = movieIndex
+				site.Movies = append(site.Movies, movie)
+				c.Visit(movie.DownloadLink)
+				movieIndex++
+			}
 		})
 
 	})
 
+	//  c.OnRequest(func(r *colly.Request) {
+	//    fmt.Println("Visiting", r.URL.String())
+	//  })
+
+	c.OnResponse(func(r *colly.Response) {
+		if len(site.Movies) > 0 {
+			lastMovie := &site.Movies[len(site.Movies)-1]
+			lastMovie.DownloadLink = r.Request.URL.String()
+			lastMovie.getdownloadlink(c)
+		}
+	})
+
 	c.Visit(url)
-
-	for _, movie := range site.Movies {
-		movie.getdownloadlink(c)
-	}
-
 }
 
 // SafetextlinkSearch : Searches tfpdl for the movie primarily to return each SafeTxtLink
