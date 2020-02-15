@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
@@ -28,6 +29,7 @@ type NetNaijaMovie struct {
 	SDownloadLink []string
 	Size          string
 	Series        bool
+	UploadDate    string
 }
 
 func (movie *NetNaijaMovie) getdownloadlink(c *colly.Collector) {
@@ -70,23 +72,28 @@ type Tfpdl struct {
 	Movies    []TfpdlMovie
 }
 
-//NetNaija : Scraper structure for NetNaija
+// NetNaija : Scraper structure for NetNaija
 type NetNaija struct {
 	Title  string
 	Movies []NetNaijaMovie
 }
 
-// Search : Searches netnaija for a particular query
-func (site *NetNaija) Search(Query string) {
-	query := strings.ReplaceAll(Query, " ", "+")
-	site.Title = "Search Results for " + Query
-	url := "https://thenetnaija.com/search?t=Movie%3A" + query + "&folder=videos"
+// Scraper : does the initial scraping, passed from List or Search
+func (site *NetNaija) Scrape(url, mode string) {
+	article := ""
+	title := ""
+	if mode == "search" {
+		article = "article"
+		title = "h3.result-title"
+	} else if mode == "list" {
+		article = "article.a-file"
+		title = "h3.file-name"
+	}
 	movieIndex := 0
-
 	c := colly.NewCollector()
 
 	c.OnHTML("main", func(e *colly.HTMLElement) {
-		e.ForEach("article", func(_ int, el *colly.HTMLElement) {
+		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
 			movie := NetNaijaMovie{
 				Index:        0,
 				Title:        "",
@@ -98,7 +105,8 @@ func (site *NetNaija) Search(Query string) {
 			}
 
 			movie.PictureLink = el.ChildAttr("img", "src")
-			movie.Title = strings.TrimSpace(strings.TrimPrefix(el.ChildText("h3.result-title"), "Movie:"))
+			movie.Title = strings.TrimSpace(strings.TrimPrefix(el.ChildText(title), "Movie:"))
+			movie.UploadDate = strings.TrimSpace(el.ChildText("span.fa-clock-o"))
 			movie.Description = strings.TrimSpace(el.ChildText("p.result-desc"))
 			href := el.ChildAttr("a", "href")
 			innerlink := href + "/download"
@@ -114,10 +122,6 @@ func (site *NetNaija) Search(Query string) {
 
 	})
 
-	//  c.OnRequest(func(r *colly.Request) {
-	//    fmt.Println("Visiting", r.URL.String())
-	//  })
-
 	c.OnResponse(func(r *colly.Response) {
 		if len(site.Movies) > 0 {
 			lastMovie := &site.Movies[len(site.Movies)-1]
@@ -127,6 +131,68 @@ func (site *NetNaija) Search(Query string) {
 	})
 
 	c.Visit(url)
+}
+
+// List : list all the movies on a page
+func (site *NetNaija) List(Page int) {
+	pagestring := strconv.Itoa(Page)
+	site.Title = "List of Recent Uploads - Page " + pagestring
+	url := "https://www.thenetnaija.com/videos/movies/page/" + pagestring
+	site.Scrape(url, "list")
+}
+
+// Search : Searches netnaija for a particular query
+func (site *NetNaija) Search(Query string) {
+	query := strings.ReplaceAll(Query, " ", "+")
+	site.Title = "Search Results for " + Query
+	url := "https://thenetnaija.com/search?t=Movie%3A" + query + "&folder=videos"
+	site.Scrape(url, "search")
+	//  movieIndex := 0
+
+	//  c := colly.NewCollector()
+
+	//  c.OnHTML("main", func(e *colly.HTMLElement) {
+	//    e.ForEach("article", func(_ int, el *colly.HTMLElement) {
+	//      movie := NetNaijaMovie{
+	//        Index:        0,
+	//        Title:        "",
+	//        PictureLink:  "",
+	//        Description:  "",
+	//        DownloadLink: "",
+	//        Size:         "",
+	//        Series:       false,
+	//      }
+
+	//      movie.PictureLink = el.ChildAttr("img", "src")
+	//      movie.Title = strings.TrimSpace(strings.TrimPrefix(el.ChildText("h3.result-title"), "Movie:"))
+	//      movie.Description = strings.TrimSpace(el.ChildText("p.result-desc"))
+	//      href := el.ChildAttr("a", "href")
+	//      innerlink := href + "/download"
+
+	//      movie.DownloadLink = innerlink
+	//      if movie.Title != "" {
+	//        movie.Index = movieIndex
+	//        site.Movies = append(site.Movies, movie)
+	//        c.Visit(movie.DownloadLink)
+	//        movieIndex++
+	//      }
+	//    })
+
+	//  })
+
+	//  //  c.OnRequest(func(r *colly.Request) {
+	//  //    fmt.Println("Visiting", r.URL.String())
+	//  //  })
+
+	//  c.OnResponse(func(r *colly.Response) {
+	//    if len(site.Movies) > 0 {
+	//      lastMovie := &site.Movies[len(site.Movies)-1]
+	//      lastMovie.DownloadLink = r.Request.URL.String()
+	//      lastMovie.getdownloadlink(c)
+	//    }
+	//  })
+
+	//  c.Visit(url)
 }
 
 // SafetextlinkSearch : Searches tfpdl for the movie primarily to return each SafeTxtLink

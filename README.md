@@ -25,6 +25,7 @@ gophie
 
 Commands:
   api         host gophie as an API on a PORT env variable, fallback to set argument
+  list        lists the recent movies by page number
   clear       clear the screen
   exit        exit the program
   help        display help
@@ -32,7 +33,7 @@ Commands:
 
 
 >>> search avenge 
-Which do you want to download?
+Search Results for avenge
  ❯ Yoruba Movie: Avenger
    Revenge (2017)
    Nollywood Movie: Heartbreaker's Revenge
@@ -40,6 +41,20 @@ Which do you want to download?
    Avengers: Infinity War (2018)
    Nollywood Movie: Heartbreaker's Revenge (Part 2)
    ...
+
+ # Listing recent movies by pages
+ # A page should return 14 movies
+>>> list 2
+List of Recent Uploads - Page 2
+ ❯ 1 A Shaun the Sheep Movie: Farmageddon (2019)
+   2 Ip Man 4: The Finale (2019) [Chinese] [HC-WEBRip]
+   3 Masquerade Hotel (2019) [Japanese]
+   4 Hit-and-Run Squad (2019) [Korean]
+   5 The Windermere Children (2020)
+   6 Mardaani 2 (2019) [Indian]
+   7 The Coldest Game (2019)
+   ...
+   14 The Bravest  (2019)
 
 >>> api 9000
 listening on :9000
@@ -58,6 +73,9 @@ curl -s 'http://127.0.0.1:9000/?search=good+boys'
 
 2020/02/11 01:45:42 searching for good boys
 2020/02/11 01:45:50 Completed search for good boys
+
+# use the following to list the most recent page on the hosted api
+curl -s 'http://127.0.0.1:9000/?list=1'
 ```
 
 
@@ -74,6 +92,9 @@ Deployed version is hosted [here](https://gophie.herokuapp.com)
 - [x] Host API on Heroku
 - [x] Update README
 - [x] Generate binaries for all platforms
+- [x] Create list movies by page feature
+- [x] Add list movies by page feature into api
+- [x] Write first ever tech article using Project experience
 - [x] Write initial tests
 - [ ] Increment tests
 - [ ] Create React app to consume hosted API

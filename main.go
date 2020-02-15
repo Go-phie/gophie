@@ -14,17 +14,27 @@ import (
 	"strings"
 )
 
+var red = color.New(color.FgRed).SprintFunc()
+var yellow = color.New(color.FgYellow).SprintFunc()
+
 func Handler(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
-	if search == "" {
-		log.Println("missing search argument")
-		http.Error(w, "search argument is missing in url", http.StatusForbidden)
+	list := r.URL.Query().Get("list")
+	if search == "" && list == "" {
+		log.Println("missing search and list argument")
+		http.Error(w, "search and list argument is missing in url", http.StatusForbidden)
 		return
 	}
-	log.Println("searching for", search)
-	query := strings.ReplaceAll(search, "+", " ")
 	site := new(scraper.NetNaija)
-	site.Search(query)
+	if search != "" {
+		log.Println("searching for", search)
+		query := strings.ReplaceAll(search, "+", " ")
+		site.Search(query)
+	} else if list != "" {
+		log.Println("listing page ", list)
+		pagenum, _ := strconv.Atoi(list)
+		site.List(pagenum)
+	}
 
 	// dump results
 	b, err := json.Marshal(site.Movies)
@@ -37,13 +47,63 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Completed search for", search)
 }
 
+func searchOrList(c *ishell.Context, site *scraper.NetNaija) {
+	choices := []string{}
+	for _, i := range site.Movies {
+		if i.Title != "" {
+			choices = append(choices, strconv.Itoa(1+i.Index)+" "+i.Title)
+		}
+	}
+	c.ProgressBar().Stop()
+	if len(choices) > 0 {
+		choice := c.MultiChoice(choices, yellow(site.Title))
+		if site.Movies[choice].Series && strings.HasSuffix(site.Movies[choice].DownloadLink, "download") {
+			c.Println("This series could not be parsed")
+			c.Println(site.Movies[choice].SDownloadLink)
+		} else {
+			url := site.Movies[choice].DownloadLink
+			downloadhandler := &downloader.FileDownloader{
+				URL: url,
+				Mb:  0.0,
+			}
+			if file := downloadhandler.Filesize(); file != 0.0 {
+				c.Println("Starting Download ==> Size: ", downloadhandler.Mb, "MB")
+				err := downloadhandler.DownloadFile(c)
+				if err != nil {
+					c.Println(red(err))
+				}
+			}
+		}
+	} else {
+		c.Println(red("Could not find any match"))
+	}
+}
+
 func main() {
-	red := color.New(color.FgRed).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
 	shell := ishell.New()
 
 	// display welcome info.
 	shell.Println("Gophie Movie Downloader Shell")
+
+	// register "list" command
+	shell.AddCmd(&ishell.Cmd{
+		Name: "list",
+		Help: "lists the recent movies by page number",
+		Func: func(c *ishell.Context) {
+
+			display := ishell.ProgressDisplayCharSet(spinner.CharSets[35])
+			c.ProgressBar().Display(display)
+			c.ProgressBar().Start()
+			site := new(scraper.NetNaija)
+			pagenum, err := strconv.Atoi(strings.Join(c.Args, ""))
+			if err != nil {
+				c.Println(red("Please enter a number"))
+				return
+			}
+			site.List(pagenum)
+			searchOrList(c, site)
+		},
+	})
 
 	// register a function for "search" command.
 	shell.AddCmd(&ishell.Cmd{
@@ -55,35 +115,7 @@ func main() {
 			c.ProgressBar().Start()
 			site := new(scraper.NetNaija)
 			site.Search(strings.Join(c.Args, " "))
-			choices := []string{}
-			for _, i := range site.Movies {
-				if i.Title != "" {
-					choices = append(choices, strconv.Itoa(1+i.Index)+" "+i.Title)
-				}
-			}
-			c.ProgressBar().Stop()
-			if len(choices) > 0 {
-				choice := c.MultiChoice(choices, yellow("Which do you want to download?"))
-				if site.Movies[choice].Series {
-					c.Println("This is a series")
-				} else {
-					url := site.Movies[choice].DownloadLink
-					downloadhandler := &downloader.FileDownloader{
-						URL: url,
-						Mb:  0.0,
-					}
-					if file := downloadhandler.Filesize(); file != 0.0 {
-						c.Println("Starting Download ==> Size: ", downloadhandler.Mb, "MB")
-						err := downloadhandler.DownloadFile(c)
-						if err != nil {
-							c.Println(red(err))
-						}
-					}
-				}
-			} else {
-				c.Println(red("Could not find any match"))
-			}
-
+			searchOrList(c, site)
 		},
 	})
 
