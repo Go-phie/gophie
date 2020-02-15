@@ -42,9 +42,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Println("failed to serialize response:", err)
 		return
 	}
+	enableCors(&w)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(b)
-	log.Println("Completed search for", search)
+	log.Println("Completed search for", search, list)
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func searchOrList(c *ishell.Context, site *scraper.NetNaija) {
