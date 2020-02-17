@@ -1,15 +1,13 @@
-module main.go
+module github.com/bisoncorps/gophie
 
 go 1.13
 
 require (
-	github.com/abiosoft/ishell v2.0.0+incompatible
-	github.com/briandowns/spinner v1.8.0
+	github.com/briandowns/spinner v1.9.0
 	github.com/fatih/color v1.9.0
-	gophie/lib/downloader v0.0.0-00010101000000-000000000000
-	gophie/pkg/scraper v0.0.0-00010101000000-000000000000
+	github.com/gocolly/colly/v2 v2.0.1
+	github.com/manifoldco/promptui v0.7.0
+	github.com/mitchellh/go-homedir v1.1.0
+	github.com/spf13/cobra v0.0.5
+	github.com/spf13/viper v1.6.2
 )
-
-replace gophie/pkg/scraper => ./pkg/scraper
-
-replace gophie/lib/downloader => ./lib/downloader

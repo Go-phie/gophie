@@ -1,16 +1,16 @@
 package downloader
 
 import (
-	"fmt"
-	"github.com/abiosoft/ishell"
-	"github.com/fatih/color"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // FileDownloader : structure for file downloader
@@ -25,22 +25,21 @@ type FileDownloader struct {
 	Rawsize float64
 }
 
-// PrintDownloadProgress ; Prints progress using the ishell context
-func (f *FileDownloader) PrintDownloadProgress(c *ishell.Context, done chan int64) {
+// PrintDownloadProgress ; Prints progress
+func (f *FileDownloader) PrintDownloadProgress(done chan int64) {
 	var stop bool = false
 	for {
 		select {
 		case <-done:
 			stop = true
-			c.ProgressBar().Stop()
 		default:
 			file, err := os.Open(f.Filepath)
 			if err != nil {
-				c.Println(err)
+				log.Println(err)
 			}
 			fi, err := file.Stat()
 			if err != nil {
-				c.Println(err)
+				log.Println(err)
 			}
 			// get file size
 			size := fi.Size()
@@ -48,10 +47,8 @@ func (f *FileDownloader) PrintDownloadProgress(c *ishell.Context, done chan int6
 			if size == 0 {
 				size = 1
 			}
-			// compute integer percent of current size against rawsize
-			percent := math.Round((float64(size) / f.Rawsize) * 100)
-			c.ProgressBar().Suffix(fmt.Sprint(" ", percent, "%"))
-			c.ProgressBar().Progress(int(percent))
+			//      // compute integer percent of current size against rawsize
+			//      percent := math.Round((float64(size) / f.Rawsize) * 100)
 		}
 
 		if stop {
@@ -70,7 +67,7 @@ func (f *FileDownloader) resp() (*http.Response, error) {
 
 // DownloadFile will download a url to a local file. It's efficient because it will
 // write as it downloads and not load the whole file into memory.
-func (f *FileDownloader) DownloadFile(c *ishell.Context) error {
+func (f *FileDownloader) DownloadFile() error {
 
 	// Get the data
 	resp, err := f.resp()
@@ -83,7 +80,7 @@ func (f *FileDownloader) DownloadFile(c *ishell.Context) error {
 	cwd, _ := os.Getwd()
 	filepath := path.Join(cwd, filename)
 	f.Filepath = filepath
-	c.Println("Downloading at", filepath)
+	log.Println("Downloading at", filepath)
 	defer resp.Body.Close()
 
 	// Create the file
@@ -94,8 +91,7 @@ func (f *FileDownloader) DownloadFile(c *ishell.Context) error {
 	defer out.Close()
 
 	done := make(chan int64)
-	c.ProgressBar().Start()
-	go f.PrintDownloadProgress(c, done)
+	go f.PrintDownloadProgress(done)
 
 	// Write the body to file
 	comp, err := io.Copy(out, resp.Body)
@@ -103,7 +99,7 @@ func (f *FileDownloader) DownloadFile(c *ishell.Context) error {
 	done <- comp
 
 	green := color.New(color.FgGreen).SprintFunc()
-	c.Println(green("Completed Downloading ", f.Filepath))
+	log.Println(green("Completed Downloading ", f.Filepath))
 
 	return err
 }

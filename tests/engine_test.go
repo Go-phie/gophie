@@ -1,13 +1,13 @@
 package main
 
 import (
-	"gophie/pkg/scraper"
+	"github.com/bisoncorps/gophie/engine"
 	"strings"
 	"testing"
 )
 
 func TestNetNaija(t *testing.T) {
-	scrapehandler := new(scraper.NetNaija)
+	scrapehandler := new(engine.NetNaijaEngine)
 	scrapehandler.Search("Guns")
 
 	if len(scrapehandler.Movies) < 1 {

@@ -15,69 +15,31 @@ Search and download movies without having to bump into ads. Feel free to add any
 - Windows - [32-bit](bin/windows/32-bit/gophie)
 - Linux - [x86_64](bin/linux/x86-64/gophie)
 
-### Usage
+## Usage
 
 gophie
 
 ```bash
-# to access the help menu
->>> help
+Usage:
+  gophie [command]
 
-Commands:
-  api         host gophie as an API on a PORT env variable, fallback to set argument
+Available Commands:
+  api         host gophie as an API on a PORT env variable, fallback to set argument                                                                
+  help        Help about any command
   list        lists the recent movies by page number
-  clear       clear the screen
-  exit        exit the program
-  help        display help
-  search      search for movie
+  search      search for a movie
+  version     Get Gophie Version
 
+Flags:
+      --config string   config file (default is $HOME/.gophie.yaml)
+      --engine string   The Engine to use for querying and downloading (default "NetNaija")                                                         
+  -h, --help            help for gophie
+  -t, --toggle          Help message for toggle
 
->>> search avenge 
-Search Results for avenge
- ❯ Yoruba Movie: Avenger
-   Revenge (2017)
-   Nollywood Movie: Heartbreaker's Revenge
-   Avengers: Endgame (2019)
-   Avengers: Infinity War (2018)
-   Nollywood Movie: Heartbreaker's Revenge (Part 2)
-   ...
-
- # Listing recent movies by pages
- # A page should return 14 movies
->>> list 2
-List of Recent Uploads - Page 2
- ❯ 1 A Shaun the Sheep Movie: Farmageddon (2019)
-   2 Ip Man 4: The Finale (2019) [Chinese] [HC-WEBRip]
-   3 Masquerade Hotel (2019) [Japanese]
-   4 Hit-and-Run Squad (2019) [Korean]
-   5 The Windermere Children (2020)
-   6 Mardaani 2 (2019) [Indian]
-   7 The Coldest Game (2019)
-   ...
-   14 The Bravest  (2019)
-
->>> api 9000
-listening on :9000
-
-# use the following to search for "good boys" on the hosted api
-curl -s 'http://127.0.0.1:9000/?search=good+boys'
-[
-  {
-    "Index":0,
-    "Title":"Good Boys (2019)",
-    "PictureLink":"https://img.netnaija.com/-c2HHK.jpg",
-    "Description":...
-  },
-  ...
-]
-
-2020/02/11 01:45:42 searching for good boys
-2020/02/11 01:45:50 Completed search for good boys
-
-# use the following to list the most recent page on the hosted api
-curl -s 'http://127.0.0.1:9000/?list=1'
+Use "gophie [command] --help" for more information about a command.
 ```
 
+For Development use `go run main.go [command]`
 
 ## Deployed
 
@@ -107,6 +69,6 @@ This project is opened under the [MIT 2.0 License](https://github.com/bisoncorps
 ## Credits
 Library | Use
 ------- | -----
-[github.com/fatih/color](https://github.com/fatih/color) | color capabilities
-[github.com/abiosoft/shell](https://github.com/abiosoft/shell) | creating an interactive cli
 [github.com/gocolly/colly](https://github.com/gocolly/colly) | scraping the net for links
+[github.com/manifoldco/promptui](https://github.com/manifoldco/promptui/) | interactive CLI
+[github.com/spf13/cobra](https://github.com/spf13/cobra) | CLI interface

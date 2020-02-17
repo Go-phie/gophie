@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gophie/lib/downloader"
+	"github.com/bisoncorps/gophie/downloader"
 	"testing"
 )
 
