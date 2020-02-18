@@ -20,22 +20,34 @@ import (
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 const defaultEngine = "NetNaija"
 
-var cfgFile string
-
-// Engine : The Engine to use for downloads
-var Engine string
+var (
+	cfgFile string
+	// Engine : The Engine to use for downloads
+	Engine string
+	// Verbose : Should display verbose logs
+	Verbose bool
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gophie",
 	Short: "A CLI for downloading movies from different sources",
 	Long:  `Gophie`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Log only errors except in Verbose mode
+		if Verbose {
+			log.SetLevel(log.DebugLevel)
+		} else {
+			log.SetLevel(log.ErrorLevel)
+		}
+	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -66,7 +78,8 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Display Verbose logs")
+
 }
 
 // initConfig reads in config file and ENV variables if set.

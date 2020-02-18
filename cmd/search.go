@@ -17,10 +17,13 @@ package cmd
 
 import (
 	"log"
+	"os"
 	"strings"
+	"time"
 
 	//  "github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
+	"github.com/briandowns/spinner"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -39,8 +42,18 @@ var searchCmd = &cobra.Command{
 		// Engine is set from root.go
 		selectedEngine := engine.GetEngine(Engine)
 		query := strings.Join(args, " ")
-		result := selectedEngine.Search(query)
-		log.Printf("%v\n", result)
+		var result engine.SearchResult
+		// Start Spinner
+		if !Verbose {
+			s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+			s.Suffix = " Fetching Data..."
+			s.Writer = os.Stderr
+			s.Start()
+			result = selectedEngine.Search(query)
+			s.Stop()
+		} else {
+			result = selectedEngine.Search(query)
+		}
 		prompt := promptui.Select{
 			Label: result.Query,
 			Items: result.Titles(),

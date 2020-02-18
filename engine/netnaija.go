@@ -2,13 +2,13 @@ package engine
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 // NetNaijaEngine : An Engine for  NetNaija
@@ -119,18 +119,18 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting ", r.URL.String())
+		log.Infof("Visiting %v", r.URL.String())
 	})
 
 	c.OnResponse(func(r *colly.Response) {
-		log.Println("Response from visiting ", r.Request.URL.String())
+		log.Infof("Done %v", r.Request.URL.String())
 	})
 
 	// Attach Movie Index to Context before making visits
 	downloadLinkCollector.OnRequest(func(r *colly.Request) {
 		for i, movie := range movies {
 			if movie.DownloadLink.String() == r.URL.String() {
-				log.Printf("Retrieving Download Link %v\n", movie.DownloadLink)
+				log.Infof("Retrieving Download Link %v\n", movie.DownloadLink)
 				r.Ctx.Put("movieIndex", strconv.Itoa(i))
 			}
 		}
@@ -138,7 +138,7 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
 		movie := &movies[getMovieIndexFromCtx(r.Request)]
-		log.Printf("Retrieved Download Link %v\n", movie.DownloadLink)
+		log.Infof("Retrieved Download Link %v\n", movie.DownloadLink)
 	})
 
 	// Update movie size

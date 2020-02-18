@@ -3,11 +3,11 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 
 	"github.com/gocolly/colly/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 // Props : The scraping engine Properties and description about the engine (e.g NetNaijaEngine)
