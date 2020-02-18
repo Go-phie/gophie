@@ -17,14 +17,12 @@ package cmd
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/bisoncorps/gophie/engine"
-	//  "github.com/briandowns/spinner"
-	//  "github.com/fatih/color"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -36,17 +34,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	list := r.URL.Query().Get("list")
 	var result engine.SearchResult
 	if search == "" && list == "" {
-		log.Println("missing search and list argument")
+		log.Debug("missing search and list argument")
 		http.Error(w, "search and list argument is missing in url", http.StatusForbidden)
 		return
 	}
 	site := engine.NewNetNaijaEngine()
 	if search != "" {
-		log.Println("searching for", search)
+		log.Debug("searching for", search)
 		query := strings.ReplaceAll(search, "+", " ")
 		result = site.Search(query)
 	} else if list != "" {
-		log.Println("listing page ", list)
+		log.Debug("listing page ", list)
 		pagenum, _ := strconv.Atoi(list)
 		result = site.List(pagenum)
 	}
@@ -54,13 +52,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// dump results
 	b, err := json.Marshal(result.Movies)
 	if err != nil {
-		log.Println("failed to serialize response:", err)
-		return
+		log.Fatal("failed to serialize response: ", err)
 	}
 	enableCors(&w)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(b)
-	log.Println("Completed search for", search, list)
+	log.Debug("Completed search for", search, list)
 }
 
 func enableCors(w *http.ResponseWriter) {
@@ -74,7 +71,7 @@ var apiCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		http.HandleFunc("/", handler)
-		log.Println("listening on", port)
+		log.Info("listening on ", port)
 		_, err := strconv.Atoi(port)
 		if err != nil {
 			log.Fatal(err)

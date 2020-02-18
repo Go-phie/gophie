@@ -93,7 +93,11 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 			}
 
 			movie.CoverPhotoLink = el.ChildAttr("img", "src")
-			movie.Title = strings.TrimSpace(strings.TrimPrefix(el.ChildText(title), "Movie:"))
+			// Remove all Video: or Movie: Prefixes
+			movie.Title = strings.TrimSpace(
+				strings.TrimPrefix(
+					strings.TrimPrefix(el.ChildText(title), "Movie:"),
+					"Video:"))
 			movie.UploadDate = strings.TrimSpace(el.ChildText("span.fa-clock-o"))
 			movie.Description = strings.TrimSpace(el.ChildText("p.result-desc"))
 			downloadLink, err := url.Parse(el.ChildAttr("a", "href"))
@@ -119,26 +123,34 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		log.Infof("Visiting %v", r.URL.String())
+		r.Headers.Set("Accept", "text/html")
+		log.Debugf("Visiting %v", r.URL.String())
 	})
 
 	c.OnResponse(func(r *colly.Response) {
-		log.Infof("Done %v", r.Request.URL.String())
+		log.Debugf("Done %v", r.Request.URL.String())
 	})
 
 	// Attach Movie Index to Context before making visits
 	downloadLinkCollector.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml")
 		for i, movie := range movies {
 			if movie.DownloadLink.String() == r.URL.String() {
-				log.Infof("Retrieving Download Link %v\n", movie.DownloadLink)
+				log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
 				r.Ctx.Put("movieIndex", strconv.Itoa(i))
 			}
 		}
 	})
 
+	// If Response Content Type is not Text, Abort the Request to prevent fully downloading the
+	// body in case of other types like mp4
+	//  downloadLinkCollector.OnResponseHeaders(func(r *colly.Response) {
+	//    log.Fatal(r.Headers)
+	//  })
+
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
 		movie := &movies[getMovieIndexFromCtx(r.Request)]
-		log.Infof("Retrieved Download Link %v\n", movie.DownloadLink)
+		log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
 	})
 
 	// Update movie size

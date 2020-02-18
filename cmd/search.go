@@ -16,17 +16,20 @@ limitations under the License.
 package cmd
 
 import (
-	"log"
 	"os"
+	"path"
 	"strings"
 	"time"
 
-	//  "github.com/bisoncorps/gophie/downloader"
+	"github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
 	"github.com/briandowns/spinner"
 	"github.com/manifoldco/promptui"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var outputPath string
 
 // searchCmd represents the search command
 var searchCmd = &cobra.Command{
@@ -67,10 +70,32 @@ var searchCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("%v\n", selectedMovie)
+		log.Debugf("Movie: %v\n", selectedMovie)
+
+		// Start Movie Download
+		downloadhandler := &downloader.FileDownloader{
+			URL:  selectedMovie.DownloadLink.String(),
+			Name: selectedMovie.Title,
+			Mb:   0.0,
+		}
+
+		if outputPath != "" {
+			downloadhandler.Dir = path.Join(outputPath, downloadhandler.Name)
+		}
+
+		if fileSize := downloadhandler.GetFileSize(); fileSize != 0.0 {
+			log.Infof("Starting Download %v ==> Size: %v MB", selectedMovie.Title, downloadhandler.Mb)
+			err := downloadhandler.DownloadFile()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	},
 }
 
 func init() {
+
+	searchCmd.PersistentFlags().StringVarP(
+		&outputPath, "output-dir", "o", "", "Path to download files to")
 	rootCmd.AddCommand(searchCmd)
 }

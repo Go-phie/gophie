@@ -45,12 +45,12 @@ var rootCmd = &cobra.Command{
 		if Verbose {
 			log.SetLevel(log.DebugLevel)
 		} else {
-			log.SetLevel(log.ErrorLevel)
+			log.SetLevel(log.InfoLevel)
 		}
 	},
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		fmt.Println("\n\nGophie - Bisoncorp (2020) (https://github.com/bisoncorps/gophie)")
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -73,8 +73,8 @@ func init() {
 		&cfgFile, "config", "", "config file (default is $HOME/.gophie.yaml)")
 	// Get Engine to use for search
 	// Default is set to NetNaija at the Moment
-	rootCmd.PersistentFlags().StringVar(
-		&Engine, "engine", defaultEngine, "The Engine to use for querying and downloading")
+	rootCmd.PersistentFlags().StringVarP(
+		&Engine, "engine", "e", defaultEngine, "The Engine to use for querying and downloading")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

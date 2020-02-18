@@ -1,68 +1,36 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"math"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
-	"time"
+	"strings"
 
-	"github.com/fatih/color"
+	"github.com/cheggaaa/pb/v3"
+	log "github.com/sirupsen/logrus"
 )
 
 // FileDownloader : structure for file downloader
 type FileDownloader struct {
-	// Url to be downloaded from
-	URL string
-	// Filepath to be saved to
-	Filepath string
-	// Mb is the size in megabytes
-	Mb float64
-	// raw size
-	Rawsize float64
-}
-
-// PrintDownloadProgress ; Prints progress
-func (f *FileDownloader) PrintDownloadProgress(done chan int64) {
-	var stop bool = false
-	for {
-		select {
-		case <-done:
-			stop = true
-		default:
-			file, err := os.Open(f.Filepath)
-			if err != nil {
-				log.Println(err)
-			}
-			fi, err := file.Stat()
-			if err != nil {
-				log.Println(err)
-			}
-			// get file size
-			size := fi.Size()
-
-			if size == 0 {
-				size = 1
-			}
-			//      // compute integer percent of current size against rawsize
-			//      percent := math.Round((float64(size) / f.Rawsize) * 100)
-		}
-
-		if stop {
-			break
-		}
-
-		time.Sleep(time.Second)
-	}
-
+	URL      string  // Url to be downloaded from
+	Name     string  // Name of File to be Download
+	Dir      string  // Directory to store the file
+	FileName string  // Filename of file with extension
+	Mb       float64 // Mb is the size in megabytes
+	RawSize  int64   // raw size
 }
 
 func (f *FileDownloader) resp() (*http.Response, error) {
 	resp, err := http.Get(f.URL)
 	return resp, err
+}
+
+func (f *FileDownloader) filePath() string {
+	return path.Join(f.Dir, f.FileName)
 }
 
 // DownloadFile will download a url to a local file. It's efficient because it will
@@ -72,45 +40,64 @@ func (f *FileDownloader) DownloadFile() error {
 	// Get the data
 	resp, err := f.resp()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	re := regexp.MustCompile(`filename="(.*)"`)
-	content := resp.Header["Content-Disposition"][0]
-	filename := re.FindStringSubmatch(content)[1]
-	cwd, _ := os.Getwd()
-	filepath := path.Join(cwd, filename)
-	f.Filepath = filepath
-	log.Println("Downloading at", filepath)
+	contentDisposition := resp.Header.Get("Content-Disposition")
+	if contentDisposition != "" {
+		f.FileName = re.FindStringSubmatch(contentDisposition)[1]
+	} else {
+		// example: Content-Type: [text/mp4]
+		mimeType := strings.Split(resp.Header.Get("Content-Type"), "/")[1]
+		f.FileName = fmt.Sprintf("%v.%v", f.Name, mimeType)
+	}
+
+	// TODO Choose Default File Path for Download, preferably &HOME/Downloads (unix)
+	// %USERPROFILE%\Downloads Windows
+	if f.Dir == "" {
+		cwd, _ := os.Getwd()
+		f.Dir = path.Join(cwd, "Gophie_Downloads", f.Name)
+	}
+	err = os.MkdirAll(f.Dir, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Debug("Downloading at ", f.filePath())
 	defer resp.Body.Close()
 
 	// Create the file
-	out, err := os.Create(f.Filepath)
+	out, err := os.Create(f.filePath())
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 
-	done := make(chan int64)
-	go f.PrintDownloadProgress(done)
+	bar := pb.Full.Start64(f.RawSize)
+
+	// create proxy reader
+	barReader := bar.NewProxyReader(resp.Body)
 
 	// Write the body to file
-	comp, err := io.Copy(out, resp.Body)
+	_, err = io.Copy(out, barReader)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bar.Finish()
 
-	done <- comp
-
-	green := color.New(color.FgGreen).SprintFunc()
-	log.Println(green("Completed Downloading ", f.Filepath))
+	log.Infof("Download Complete. Saved at %v", f.filePath())
 
 	return err
 }
 
-// Filesize : Check the file size
-func (f *FileDownloader) Filesize() float64 {
+// GetFileSize : Check the file size
+func (f *FileDownloader) GetFileSize() int64 {
 	resp, err := f.resp()
-	if err == nil {
-		f.Mb = math.Round(float64(resp.ContentLength) / 1048576)
-		f.Rawsize = float64(resp.ContentLength)
-		return f.Rawsize
+	if err != nil {
+		log.Fatal(err)
 	}
-	return 0.00
+
+	f.Mb = math.Round(float64(resp.ContentLength) / 1048576)
+	f.RawSize = resp.ContentLength
+	return f.RawSize
 }
