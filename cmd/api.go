@@ -28,8 +28,8 @@ import (
 
 var port string
 
-// handler handles serving gophie
-func handler(w http.ResponseWriter, r *http.Request) {
+// Handler : handles serving gophie
+func Handler(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	list := r.URL.Query().Get("list")
 	var result engine.SearchResult
@@ -40,7 +40,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	site := engine.NewNetNaijaEngine()
 	if search != "" {
-		log.Debug("searching for", search)
+		log.Debug("Searching for ", search)
 		query := strings.ReplaceAll(search, "+", " ")
 		result = site.Search(query)
 	} else if list != "" {
@@ -70,13 +70,13 @@ var apiCmd = &cobra.Command{
 	Short: "host gophie as an API on a PORT env variable, fallback to set argument",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		http.HandleFunc("/", handler)
+		http.HandleFunc("/", Handler)
 		log.Info("listening on ", port)
 		_, err := strconv.Atoi(port)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Fatal(http.ListenAndServe(port, nil))
+		log.Fatal(http.ListenAndServe(":"+port, nil))
 	},
 }
 

@@ -158,6 +158,12 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 		movies[getMovieIndexFromCtx(e.Request)].Size = strings.TrimSpace(e.ChildText("span.size"))
 	})
 
+	downloadLinkCollector.OnHTML("h3.file-name", func(e *colly.HTMLElement) {
+		downloadlink, _ := url.Parse(path.Join(strings.TrimSpace(e.ChildAttr("a", "href")), "download"))
+		movies[getMovieIndexFromCtx(e.Request)].DownloadLink = downloadlink
+		downloadLinkCollector.Visit(downloadlink.String())
+	})
+
 	// Update movie download link if a[id=download] on page
 	downloadLinkCollector.OnHTML("a[id=download]", func(e *colly.HTMLElement) {
 		movie := &movies[getMovieIndexFromCtx(e.Request)]

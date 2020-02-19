@@ -1,21 +1,23 @@
-package main
+package tests
 
 import (
+	"fmt"
 	"github.com/bisoncorps/gophie/engine"
 	"strings"
 	"testing"
 )
 
 func TestNetNaija(t *testing.T) {
-	scrapehandler := new(engine.NetNaijaEngine)
-	scrapehandler.Search("Guns")
+	scrapehandler := engine.GetEngine("NetNaija")
+	result := scrapehandler.Search("avenge")
 
-	if len(scrapehandler.Movies) < 1 {
+	if len(result.Movies) < 1 {
 		t.Errorf("No movies returned")
 	} else {
-		for _, movie := range scrapehandler.Movies {
-			if movie.Series == false {
-				if !(strings.HasSuffix(movie.DownloadLink, "1") || strings.HasSuffix(movie.DownloadLink, ".mp4")) {
+		for _, movie := range result.Movies {
+			if movie.IsSeries == false {
+				if !(strings.HasSuffix(movie.DownloadLink.String(), "1") || strings.HasSuffix(movie.DownloadLink.String(), ".mp4")) {
+					fmt.Println(movie.DownloadLink.String())
 					t.Errorf("Could not obtain link for single movie")
 				}
 			}

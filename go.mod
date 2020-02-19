@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/briandowns/spinner v1.9.0
 	github.com/cheggaaa/pb/v3 v3.0.4
-	github.com/fatih/color v1.9.0
+	github.com/fatih/color v1.9.0 // indirect
 	github.com/gocolly/colly/v2 v2.0.1
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mitchellh/go-homedir v1.1.0

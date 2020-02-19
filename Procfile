@@ -1,1 +1,1 @@
-web: ./bin/main exit api
+web: ./bin/gophie api --verbose -p $PORT

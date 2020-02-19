@@ -58,8 +58,10 @@ Deployed version is hosted [here](https://gophie.herokuapp.com)
 - [x] Add list movies by page feature into api
 - [x] Write first ever tech article using Project experience
 - [x] Write initial tests
+- [x] Create React app to consume hosted API
+- [ ] Implement resume downloads
+- [ ] Include downloads over multiple goroutines
 - [ ] Increment tests
-- [ ] Create React app to consume hosted API
 
 ## License (MIT)
 

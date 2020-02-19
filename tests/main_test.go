@@ -1,13 +1,14 @@
-package main
+package tests
 
 import (
+	"github.com/bisoncorps/gophie/cmd"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestAPI(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(Handler))
+	ts := httptest.NewServer(http.HandlerFunc(cmd.Handler))
 	defer ts.Close()
 
 	res, _ := http.Get(ts.URL + "/?search=good+boys")
