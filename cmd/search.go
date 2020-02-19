@@ -16,14 +16,9 @@ limitations under the License.
 package cmd
 
 import (
-	"os"
-	"path"
 	"strings"
-	"time"
 
-	"github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
-	"github.com/briandowns/spinner"
 	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -46,17 +41,8 @@ var searchCmd = &cobra.Command{
 		selectedEngine := engine.GetEngine(Engine)
 		query := strings.Join(args, " ")
 		var result engine.SearchResult
-		// Start Spinner
-		if !Verbose {
-			s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
-			s.Suffix = " Fetching Data..."
-			s.Writer = os.Stderr
-			s.Start()
-			result = selectedEngine.Search(query)
-			s.Stop()
-		} else {
-			result = selectedEngine.Search(query)
-		}
+		// Initialize process and show loader on terminal and store result in result
+		result = ProcessFetchTask(func() engine.SearchResult { return selectedEngine.Search(query) })
 		prompt := promptui.Select{
 			Label: result.Query,
 			Items: result.Titles(),
@@ -71,25 +57,11 @@ var searchCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		log.Debugf("Movie: %v\n", selectedMovie)
-
 		// Start Movie Download
-		downloadhandler := &downloader.FileDownloader{
-			URL:  selectedMovie.DownloadLink.String(),
-			Name: selectedMovie.Title,
-			Mb:   0.0,
+		if err = selectedMovie.Download(outputPath); err != nil {
+			log.Fatal(err)
 		}
 
-		if outputPath != "" {
-			downloadhandler.Dir = path.Join(outputPath, downloadhandler.Name)
-		}
-
-		if fileSize := downloadhandler.GetFileSize(); fileSize != 0.0 {
-			log.Infof("Starting Download %v ==> Size: %v MB", selectedMovie.Title, downloadhandler.Mb)
-			err := downloadhandler.DownloadFile()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
 	},
 }
 

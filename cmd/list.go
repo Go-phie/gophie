@@ -17,18 +17,12 @@ package cmd
 
 import (
 	"github.com/bisoncorps/gophie/engine"
-	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"time"
-
-	"github.com/bisoncorps/gophie/downloader"
-	"github.com/briandowns/spinner"
 	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-var pageNum *int
+var pageNum int
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -38,23 +32,15 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		selectedEngine := engine.GetEngine(Engine)
 		var result engine.SearchResult
-		if !Verbose {
-			s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
-			s.Suffix = " Fetching Data..."
-			s.Writer = os.Stderr
-			s.Start()
-			result = selectedEngine.List(*pageNum)
-			s.Stop()
-		} else {
-			result = selectedEngine.List(*pageNum)
-		}
+		// Initialize process and show loader on terminal and store result in result
+		result = ProcessFetchTask(func() engine.SearchResult { return selectedEngine.List(pageNum) })
 		prompt := promptui.Select{
 			Label: result.Query,
 			Items: result.Titles(),
 		}
 		_, choice, err := prompt.Run()
 		if err != nil {
-			log.Fatalf("Prompt failed %v\n", err)
+			log.Fatalf("Prompt failed: %v\n", err)
 		}
 
 		selectedMovie, err := result.GetMovieByTitle(choice)
@@ -62,30 +48,14 @@ var listCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		log.Debugf("Movie: %v\n", selectedMovie)
-
 		// Start Movie Download
-		downloadhandler := &downloader.FileDownloader{
-			URL:  selectedMovie.DownloadLink.String(),
-			Name: selectedMovie.Title,
-			Mb:   0.0,
+		if err = selectedMovie.Download(outputPath); err != nil {
+			log.Fatal(err)
 		}
-
-		if outputPath != "" {
-			downloadhandler.Dir = path.Join(outputPath, downloadhandler.Name)
-		}
-
-		if fileSize := downloadhandler.GetFileSize(); fileSize != 0.0 {
-			log.Infof("Starting Download %v ==> Size: %v MB", selectedMovie.Title, downloadhandler.Mb)
-			err := downloadhandler.DownloadFile()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
 	},
 }
 
 func init() {
-	pageNum = listCmd.Flags().IntP("page", "p", 1, "Page Number to search and return from")
+	listCmd.Flags().IntVarP(&pageNum, "page", "p", 1, "Page Number to search and return from")
 	rootCmd.AddCommand(listCmd)
 }

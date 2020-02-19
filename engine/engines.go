@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"strconv"
 
+	"github.com/bisoncorps/gophie/downloader"
 	"github.com/gocolly/colly/v2"
 	log "github.com/sirupsen/logrus"
 )
@@ -42,7 +44,31 @@ type Movie struct {
 }
 
 func (m *Movie) String() string {
-	return fmt.Sprintf("%s (%s)", m.Title, m.Year)
+	return fmt.Sprintf("%s (%v)", m.Title, m.Year)
+}
+
+// Download : Download the movie
+func (m *Movie) Download(outputPath string) error {
+	// Start Movie Download
+	downloadhandler := &downloader.FileDownloader{
+		URL:  m.DownloadLink.String(),
+		Name: m.Title,
+		Mb:   0.0,
+	}
+
+	if outputPath != "" {
+		downloadhandler.Dir = path.Join(outputPath, downloadhandler.Name)
+	}
+
+	if fileSize := downloadhandler.GetFileSize(); fileSize != 0.0 {
+		log.Infof("Starting Download %v ==> Size: %v MB", m.Title, downloadhandler.Mb)
+		if err := downloadhandler.DownloadFile(); err != nil {
+			return err
+		}
+	} else {
+		return errors.New("Invalid File Size")
+	}
+	return nil
 }
 
 // SearchResult : the results of search from engine
