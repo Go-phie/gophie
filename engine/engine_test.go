@@ -1,14 +1,13 @@
-package tests
+package engine
 
 import (
 	"fmt"
-	"github.com/bisoncorps/gophie/engine"
 	"strings"
 	"testing"
 )
 
 func TestNetNaija(t *testing.T) {
-	scrapehandler := engine.GetEngine("NetNaija")
+	scrapehandler := GetEngine("NetNaija")
 	result := scrapehandler.Search("avenge")
 
 	if len(result.Movies) < 1 {

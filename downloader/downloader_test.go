@@ -1,11 +1,10 @@
-package tests
+package downloader
 
 import (
-	"github.com/bisoncorps/gophie/downloader"
 	"testing"
 )
 
-var f = &downloader.FileDownloader{
+var f = &FileDownloader{
 	URL: "http://cdn2.mhpbooks.com/2016/02/google.jpg",
 }
 
