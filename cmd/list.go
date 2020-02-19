@@ -24,34 +24,51 @@ import (
 
 var pageNum int
 
+func listPager(cmd *cobra.Command, pageNum int) {
+	selectedEngine := engine.GetEngine(Engine)
+	var result engine.SearchResult
+	var items []string
+	// Initialize process and show loader on terminal and store result in result
+	result = ProcessFetchTask(func() engine.SearchResult { return selectedEngine.List(pageNum) })
+	items = append(result.Titles(), []string{">>> Next Page"}...)
+	if pageNum != 1 {
+		items = append([]string{"<<< Previous Page"}, items...)
+	}
+	prompt := promptui.Select{
+		Label: result.Query,
+		Items: items,
+	}
+	choiceIndex, choice, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed: %v\n", err)
+	}
+
+	if choiceIndex != len(items)-1 {
+		if choiceIndex == 0 && pageNum != 1 {
+			listPager(cmd, pageNum-1)
+		}
+	} else {
+		listPager(cmd, pageNum+1)
+	}
+
+	selectedMovie, err := result.GetMovieByTitle(choice)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Debugf("Movie: %v\n", selectedMovie)
+	// Start Movie Download
+	if err = selectedMovie.Download(outputPath); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "lists the recent movies by page number",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		selectedEngine := engine.GetEngine(Engine)
-		var result engine.SearchResult
-		// Initialize process and show loader on terminal and store result in result
-		result = ProcessFetchTask(func() engine.SearchResult { return selectedEngine.List(pageNum) })
-		prompt := promptui.Select{
-			Label: result.Query,
-			Items: result.Titles(),
-		}
-		_, choice, err := prompt.Run()
-		if err != nil {
-			log.Fatalf("Prompt failed: %v\n", err)
-		}
-
-		selectedMovie, err := result.GetMovieByTitle(choice)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Debugf("Movie: %v\n", selectedMovie)
-		// Start Movie Download
-		if err = selectedMovie.Download(outputPath); err != nil {
-			log.Fatal(err)
-		}
+		listPager(cmd, pageNum)
 	},
 }
 
