@@ -27,6 +27,7 @@ Available Commands:
   api         host gophie as an API on a PORT env variable, fallback to set argument                                                                
   help        Help about any command
   list        lists the recent movies by page number
+  resume      resume downloads for previously stopped movies
   search      search for a movie
   version     Get Gophie Version
 
@@ -59,8 +60,7 @@ Deployed version is hosted [here](https://gophie.herokuapp.com)
 - [x] Write first ever tech article using Project experience
 - [x] Write initial tests
 - [x] Create React app to consume hosted API
-- [ ] Implement resume downloads
-- [ ] Include downloads over multiple goroutines
+- [x] Implement resume downloads
 - [ ] Increment tests
 
 ## License (MIT)
@@ -74,3 +74,4 @@ Library | Use
 [github.com/gocolly/colly](https://github.com/gocolly/colly) | scraping the net for links
 [github.com/manifoldco/promptui](https://github.com/manifoldco/promptui/) | interactive CLI
 [github.com/spf13/cobra](https://github.com/spf13/cobra) | CLI interface
+[github.com/iawia002/annie](https://github.com/iawia002/annie) | Downloader (resume capabilities)
