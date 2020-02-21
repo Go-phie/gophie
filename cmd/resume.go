@@ -36,7 +36,7 @@ var ResumeCmd = &cobra.Command{
 	`,
 	Args: cobra.MinimumNArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		var resume []downloader.AnnieDownloader
+		var resume []downloader.Downloader
 		var titles []string
 		file, err := os.Open("gophie_cache/resume")
 		if err != nil {
@@ -63,7 +63,6 @@ var ResumeCmd = &cobra.Command{
 		}
 		selectedDownloader := resume[choiceIndex]
 		selectedDownloader.DownloadFile()
-
 	},
 }
 

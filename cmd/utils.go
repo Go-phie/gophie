@@ -6,6 +6,7 @@ import (
 
 	"github.com/bisoncorps/gophie/engine"
 	"github.com/briandowns/spinner"
+	"github.com/spf13/viper"
 )
 
 // fetchFunc : A function that performs initiates the fetching process of the
@@ -15,7 +16,7 @@ type fetchFunc func() engine.SearchResult
 // ProcessFetchTask : Process a task in the Terminal and show processing
 func ProcessFetchTask(fn fetchFunc) engine.SearchResult {
 	var result engine.SearchResult
-	if !Verbose {
+	if !viper.GetBool("verbose") {
 		s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
 		s.Suffix = " Fetching Data..."
 		s.Writer = os.Stderr

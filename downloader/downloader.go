@@ -1,103 +1,158 @@
 package downloader
 
 import (
-	"fmt"
-	"io"
-	"math"
-	"net/http"
+	"encoding/json"
 	"os"
 	"path"
-	"regexp"
-	"strings"
 
-	"github.com/cheggaaa/pb/v3"
+	"github.com/bisoncorps/gophie/engine"
+	"github.com/iawia002/annie/config"
+	"github.com/iawia002/annie/downloader"
+	"github.com/iawia002/annie/request"
+	"github.com/iawia002/annie/utils"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-// FileDownloader : structure for file downloader
-type FileDownloader struct {
-	URL      string  // Url to be downloaded from
-	Name     string  // Name of File to be Download
-	Dir      string  // Directory to store the file
-	FileName string  // Filename of file with extension
-	Mb       float64 // Mb is the size in megabytes
-	RawSize  int64   // raw size
-}
+// Extract is the main function for extracting data before passing to Annie
+func Extract(url, source string) ([]downloader.Data, error) {
 
-func (f *FileDownloader) resp() (*http.Response, error) {
-	resp, err := http.Get(f.URL)
-	return resp, err
-}
-
-func (f *FileDownloader) filePath() string {
-	return path.Join(f.Dir, f.FileName)
-}
-
-// DownloadFile will download a url to a local file. It's efficient because it will
-// write as it downloads and not load the whole file into memory.
-func (f *FileDownloader) DownloadFile() error {
-
-	// Get the data
-	resp, err := f.resp()
+	filename, ext, err := utils.GetNameAndExt(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	re := regexp.MustCompile(`filename="(.*)"`)
-	contentDisposition := resp.Header.Get("Content-Disposition")
-	if contentDisposition != "" {
-		f.FileName = re.FindStringSubmatch(contentDisposition)[1]
-	} else {
-		// example: Content-Type: [text/mp4]
-		mimeType := strings.Split(resp.Header.Get("Content-Type"), "/")[1]
-		f.FileName = fmt.Sprintf("%v.%v", f.Name, mimeType)
-	}
-
-	// TODO Choose Default File Path for Download, preferably &HOME/Downloads (unix)
-	// %USERPROFILE%\Downloads Windows
-	if f.Dir == "" {
-		cwd, _ := os.Getwd()
-		f.Dir = path.Join(cwd, "Gophie_Downloads", f.Name)
-	}
-	err = os.MkdirAll(f.Dir, os.ModePerm)
+	size, err := request.Size(url, url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
+	}
+	urlData := downloader.URL{
+		URL:  url,
+		Size: size,
+		Ext:  ext,
+	}
+	streams := map[string]downloader.Stream{
+		"default": {
+			URLs: []downloader.URL{urlData},
+			Size: size,
+		},
+	}
+	contentType, err := request.ContentType(url, url)
+	if err != nil {
+		return nil, err
 	}
 
-	log.Debug("Downloading at ", f.filePath())
-	defer resp.Body.Close()
+	return []downloader.Data{
+		{
+			Site:    source,
+			Title:   filename,
+			Type:    contentType,
+			Streams: streams,
+			URL:     url,
+		},
+	}, nil
+}
 
-	// Create the file
-	out, err := os.Create(f.filePath())
+// Downloader : pausable downloader
+type Downloader struct {
+	URL       string // URL Source
+	Dir       string // Directory to store the file
+	Name      string // Name of file
+	Source    string // Name of the Source
+	Completed bool   // Status of Download
+}
+
+//TODO:  Check if Download is completed and ask for redownload confirmation
+
+// DownloadFile : Download Files using Annie Downloader
+func (f *Downloader) DownloadFile() error {
+	var (
+		err  error
+		data []downloader.Data
+	)
+
+	// Extract data to be downloaded with the streams
+	data, err = Extract(f.URL, f.Source)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
 
-	bar := pb.Full.Start64(f.RawSize)
-
-	// create proxy reader
-	barReader := bar.NewProxyReader(resp.Body)
-
-	// Write the body to file
-	_, err = io.Copy(out, barReader)
+	err = os.MkdirAll(f.Dir, os.ModePerm)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	bar.Finish()
 
-	log.Infof("Download Complete. Saved at %v", f.filePath())
-
-	return err
+	config.OutputPath = f.Dir
+	for _, item := range data {
+		if item.Err != nil {
+			// if this error occurs, the preparation step is normal, but the data extraction is wrong.
+			// the data is an empty struct.
+			return item.Err
+		}
+		err = downloader.Download(item, f.URL, config.ChunkSizeMB)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// GetFileSize : Check the file size
-func (f *FileDownloader) GetFileSize() int64 {
-	resp, err := f.resp()
-	if err != nil {
-		log.Fatal(err)
+// DownloadMovie : Download the movie
+func DownloadMovie(movie *engine.Movie, outputDir string) error {
+	downloadHandler := &Downloader{
+		URL:    movie.DownloadLink.String(),
+		Name:   movie.Title,
+		Source: movie.Source,
 	}
 
-	f.Mb = math.Round(float64(resp.ContentLength) / 1048576)
-	f.RawSize = resp.ContentLength
-	return f.RawSize
+	downloadHandler.Dir = path.Join(outputDir, downloadHandler.Name)
+	downloadListFile := path.Join(viper.GetString("gophie_cache"), "downloadList.json")
+
+	var (
+		downloads     []Downloader
+		downloadsFile *os.File
+		err           error
+	)
+	// Load Downloads if file exists
+	if _, err = os.Stat(downloadListFile); err == nil {
+		downloadsFile, err = os.OpenFile(downloadListFile, os.O_RDWR, os.ModePerm)
+		if err != nil {
+			return err
+		}
+		dec := json.NewDecoder(downloadsFile)
+		if err = dec.Decode(&downloads); err != nil {
+			return err
+		}
+	} else if os.IsNotExist(err) {
+		// Create Download List File if it does not exists
+		downloadsFile, err = os.Create(downloadListFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		return err
+	}
+
+	// Load Config
+	// Check for existing downloads
+	exist := func() bool {
+		for _, downloader := range downloads {
+			if downloader.Name == downloadHandler.Name {
+				return true
+			}
+		}
+		return false
+	}()
+	// if file is not in Downloads cache, add and start the download
+	// in the download cache, append it and save
+	if !exist {
+		log.Debug("Movie getting added to Download list")
+		downloads = append(downloads, *downloadHandler)
+		enc := json.NewEncoder(downloadsFile)
+		if err = enc.Encode(downloads); err != nil {
+			return err
+		}
+	}
+	downloadsFile.Close()
+
+	return downloadHandler.DownloadFile()
 }

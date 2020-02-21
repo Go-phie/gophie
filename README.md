@@ -9,7 +9,13 @@ Search and download movies without having to bump into ads. Feel free to add any
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/bisoncorps/gophie.svg?branch=master)](https://travis-ci.org/bisoncorps/gophie)
 
-## Binaries
+## Installation
+With Golang installed
+
+```bash
+go get github.com/bisoncorps/gophie
+```
+Alternatively download the Binaries and add to Path
 
 - Windows - [64 bit](bin/windows/64-bit/gophie)
 - Windows - [32-bit](bin/windows/32-bit/gophie)

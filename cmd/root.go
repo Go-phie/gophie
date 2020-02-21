@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -28,11 +29,12 @@ import (
 const defaultEngine = "NetNaija"
 
 var (
-	cfgFile string
 	// Engine : The Engine to use for downloads
-	Engine string
+	engineFlag string
 	// Verbose : Should display verbose logs
-	Verbose bool
+	verbose bool
+	// OutputPath :
+	outputPath string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,7 +44,7 @@ var rootCmd = &cobra.Command{
 	Long:  `Gophie`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Log only errors except in Verbose mode
-		if Verbose {
+		if verbose {
 			log.SetLevel(log.DebugLevel)
 		} else {
 			log.SetLevel(log.InfoLevel)
@@ -65,45 +67,39 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(
-		&cfgFile, "config", "", "config file (default is $HOME/.gophie.yaml)")
 	// Get Engine to use for search
 	// Default is set to NetNaija at the Moment
 	rootCmd.PersistentFlags().StringVarP(
-		&Engine, "engine", "e", defaultEngine, "The Engine to use for querying and downloading")
+		&engineFlag, "engine", "e", defaultEngine, "The Engine to use for querying and downloading")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Display Verbose logs")
-
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Display Verbose logs")
+	rootCmd.PersistentFlags().StringVarP(
+		&outputPath, "output-dir", "o", "", "Path to download files to")
+	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
+	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	viper.BindPFlag("engine", rootCmd.PersistentFlags().Lookup("engine"))
+	viper.BindPFlag("output-dir", rootCmd.PersistentFlags().Lookup("output-dir"))
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// Search config in home directory with name ".gophie" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".gophie")
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	// Defaults for Gophie Configs
+	viper.SetDefault("engine", defaultEngine)
+	viper.SetDefault("verbose", false)
+	viper.SetDefault("output-dir", path.Join(home, "Downloads", "Gophie"))
+	viper.Set("gophie_cache", path.Join(home, ".gophie_cache"))
+	if err := os.MkdirAll(viper.GetString("gophie_cache"), os.ModePerm); err != nil {
+		log.Fatal(err)
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	// Configs From Env
+	viper.SetEnvPrefix("gophie") // will be uppercased automatically
+	viper.AutomaticEnv()         // read in environment variables that match
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
 }

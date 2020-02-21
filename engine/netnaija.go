@@ -90,6 +90,7 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 			movie := Movie{
 				Index:    movieIndex,
 				IsSeries: false,
+				Source:   engine.Name,
 			}
 
 			movie.CoverPhotoLink = el.ChildAttr("img", "src")

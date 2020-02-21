@@ -18,13 +18,13 @@ package cmd
 import (
 	"strings"
 
+	"github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
 	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-var outputPath string
 
 // searchCmd represents the search command
 var searchCmd = &cobra.Command{
@@ -38,7 +38,7 @@ var searchCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Engine is set from root.go
-		selectedEngine := engine.GetEngine(Engine)
+		selectedEngine := engine.GetEngine(viper.GetString("engine"))
 		query := strings.Join(args, " ")
 		var result engine.SearchResult
 		// Initialize process and show loader on terminal and store result in result
@@ -58,16 +58,12 @@ var searchCmd = &cobra.Command{
 		}
 		log.Debugf("Movie: %v\n", selectedMovie)
 		// Start Movie Download
-		if err = selectedMovie.Download(outputPath); err != nil {
+		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
 			log.Fatal(err)
 		}
-
 	},
 }
 
 func init() {
-
-	searchCmd.PersistentFlags().StringVarP(
-		&outputPath, "output-dir", "o", "", "Path to download files to")
 	rootCmd.AddCommand(searchCmd)
 }
