@@ -58,6 +58,7 @@ type Downloader struct {
 	Dir       string // Directory to store the file
 	Name      string // Name of file
 	Source    string // Name of the Source
+	Size      int64  // Size of the file
 	Completed bool   // Status of Download
 }
 
@@ -98,8 +99,9 @@ func (f *Downloader) DownloadFile() error {
 
 // DownloadMovie : Download the movie
 func DownloadMovie(movie *engine.Movie, outputDir string) error {
+	url := movie.DownloadLink.String()
 	downloadHandler := &Downloader{
-		URL:    movie.DownloadLink.String(),
+		URL:    url,
 		Name:   movie.Title,
 		Source: movie.Source,
 	}
@@ -111,10 +113,18 @@ func DownloadMovie(movie *engine.Movie, outputDir string) error {
 		downloads     []Downloader
 		downloadsFile *os.File
 		err           error
+		size          int64
 	)
+	//get file size
+	size, err = request.Size(url, url)
+	if err != nil {
+		return err
+	}
+	downloadHandler.Size = size
+
 	// Load Downloads if file exists
 	if _, err = os.Stat(downloadListFile); err == nil {
-		downloadsFile, err = os.OpenFile(downloadListFile, os.O_RDWR, os.ModePerm)
+		downloadsFile, err = os.OpenFile(downloadListFile, os.O_RDONLY, os.ModePerm)
 		if err != nil {
 			return err
 		}
@@ -122,9 +132,10 @@ func DownloadMovie(movie *engine.Movie, outputDir string) error {
 		if err = dec.Decode(&downloads); err != nil {
 			return err
 		}
+		downloadsFile.Close()
 	} else if os.IsNotExist(err) {
 		// Create Download List File if it does not exists
-		downloadsFile, err = os.Create(downloadListFile)
+		_, err = os.Create(downloadListFile)
 		if err != nil {
 			return err
 		}
@@ -136,7 +147,7 @@ func DownloadMovie(movie *engine.Movie, outputDir string) error {
 	// Check for existing downloads
 	exist := func() bool {
 		for _, downloader := range downloads {
-			if downloader.Name == downloadHandler.Name {
+			if downloader.URL == downloadHandler.URL {
 				return true
 			}
 		}
@@ -147,6 +158,7 @@ func DownloadMovie(movie *engine.Movie, outputDir string) error {
 	if !exist {
 		log.Debug("Movie getting added to Download list")
 		downloads = append(downloads, *downloadHandler)
+		downloadsFile, err = os.OpenFile(downloadListFile, os.O_WRONLY, os.ModePerm)
 		enc := json.NewEncoder(downloadsFile)
 		if err = enc.Encode(downloads); err != nil {
 			return err

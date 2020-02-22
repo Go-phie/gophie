@@ -21,7 +21,9 @@ import (
 	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"os"
+	"path"
 )
 
 // ResumeCmd represents the resume command
@@ -29,7 +31,7 @@ var ResumeCmd = &cobra.Command{
 	Use:   "resume",
 	Short: "resume downloads for previously stopped movies",
 	Long: `Resume
-			gophie makes use of the annie downloader to resume previous downloads
+			Gophie makes use of the annie downloader to resume previous downloads
 	
 	It stores the list of the downloads and gives you the option to remove or resume
 	download
@@ -38,7 +40,7 @@ var ResumeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var resume []downloader.Downloader
 		var titles []string
-		file, err := os.Open("gophie_cache/resume")
+		file, err := os.Open(path.Join(viper.GetString("gophie_cache"), "downloadList.json"))
 		if err != nil {
 			log.Debug(err)
 			return
