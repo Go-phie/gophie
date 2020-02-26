@@ -48,6 +48,11 @@ Use "gophie [command] --help" for more information about a command.
 
 For Development use `go run main.go [command]`
 
+### Supported Engines
+
+- NetNaija
+- FzMovies
+
 ## Deployed
 
 Deployed version is hosted [here](https://gophie.herokuapp.com)

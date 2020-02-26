@@ -22,6 +22,7 @@ func Extract(url, source string) ([]downloader.Data, error) {
 		return nil, err
 	}
 	size, err := request.Size(url, url)
+	log.Debug(size)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +81,13 @@ func (f *Downloader) DownloadFile() error {
 	err = os.MkdirAll(f.Dir, os.ModePerm)
 	if err != nil {
 		return err
+	}
+
+	if f.Size == 0 {
+		f.Size, err = request.Size(f.URL, f.URL)
+		if err != nil {
+			return err
+		}
 	}
 
 	config.OutputPath = f.Dir

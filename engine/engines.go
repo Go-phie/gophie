@@ -72,10 +72,21 @@ func (s *SearchResult) GetMovieByTitle(title string) (Movie, error) {
 	return Movie{}, errors.New("Movie not Found")
 }
 
+// GetIndexFromTitle : return movieIndex from title
+func (s *SearchResult) GetIndexFromTitle(title string) (int, error) {
+	for index, movie := range s.Movies {
+		if movie.Title == title {
+			return index, nil
+		}
+	}
+	return 0, errors.New("Movie not Found")
+}
+
 // GetEngines : Returns all the usable engines in the application
 func GetEngines() map[string]Engine {
 	engines := make(map[string]Engine)
 	engines["NetNaija"] = NewNetNaijaEngine()
+	engines["FzMovies"] = NewFzEngine()
 	return engines
 }
 

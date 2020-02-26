@@ -32,13 +32,23 @@ var port string
 func Handler(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	list := r.URL.Query().Get("list")
-	var result engine.SearchResult
+	eng := r.URL.Query().Get("engine")
+	var (
+		result engine.SearchResult
+		site   engine.Engine
+	)
 	if search == "" && list == "" {
 		log.Debug("missing search and list argument")
 		http.Error(w, "search and list argument is missing in url", http.StatusForbidden)
 		return
 	}
-	site := engine.NewNetNaijaEngine()
+	if eng == "" {
+		// Use NetNaija as the default engine
+		site = engine.NewNetNaijaEngine()
+	} else {
+		site = engine.GetEngine(eng)
+	}
+	log.Info("Using Engine ", site)
 	if search != "" {
 		log.Debug("Searching for ", search)
 		query := strings.ReplaceAll(search, "+", " ")
