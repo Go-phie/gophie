@@ -71,9 +71,9 @@ func (engine *FzEngine) Scrape(mode string) ([]Movie, error) {
 
 	movieIndex := 0
 	c := colly.NewCollector(
-	// Cache responses to prevent multiple download of pages
-	// even if the collector is restarted
-	//    colly.CacheDir("./gophie_cache"),
+		// Cache responses to prevent multiple download of pages
+		// even if the collector is restarted
+		colly.CacheDir("./gophie_cache"),
 	)
 	// Another collector for download Links
 	downloadLinkCollector := c.Clone()
