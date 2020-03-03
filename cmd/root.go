@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const defaultEngine = "NetNaija"
+const defaultEngine = "netnaija"
 
 var (
 	// Engine : The Engine to use for downloads

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	//  "path"
 	"strconv"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 	log "github.com/sirupsen/logrus"
@@ -85,14 +86,14 @@ func (s *SearchResult) GetIndexFromTitle(title string) (int, error) {
 // GetEngines : Returns all the usable engines in the application
 func GetEngines() map[string]Engine {
 	engines := make(map[string]Engine)
-	engines["NetNaija"] = NewNetNaijaEngine()
-	engines["FzMovies"] = NewFzEngine()
+	engines["netnaija"] = NewNetNaijaEngine()
+	engines["fzmovies"] = NewFzEngine()
 	return engines
 }
 
 // GetEngine : Return an engine
 func GetEngine(engine string) Engine {
-	return GetEngines()[engine]
+	return GetEngines()[strings.ToLower(engine)]
 }
 
 // Get the movie index context stored in Request
