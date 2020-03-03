@@ -115,8 +115,6 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 			movie.DownloadLink = downloadLink
 			if movie.Title != "" {
 				movies = append(movies, movie)
-				// FIXME
-				// Colly does not visit the first movies for some weird reason
 				downloadLinkCollector.Visit(movie.DownloadLink.String())
 				movieIndex++
 			}
@@ -145,9 +143,13 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 
 	// If Response Content Type is not Text, Abort the Request to prevent fully downloading the
 	// body in case of other types like mp4
-	//  downloadLinkCollector.OnResponseHeaders(func(r *colly.Response) {
-	//    log.Fatal(r.Headers)
-	//  })
+	downloadLinkCollector.OnResponseHeaders(func(r *colly.Response) {
+		//    movie := &movies[getMovieIndexFromCtx(r.Request)]
+		if !strings.Contains(r.Headers.Get("Content-Type"), "text") {
+			r.Request.Abort()
+			log.Debugf("Response %s is not text/html. Aborting request", r.Request.URL)
+		}
+	})
 
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
 		movie := &movies[getMovieIndexFromCtx(r.Request)]
