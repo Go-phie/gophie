@@ -1,13 +1,24 @@
+<p align="center"><img src="assets/reel.png" alt="Gophie" height="100px"></p>
+
+<div align="center">
+  <a href="https://godoc.org/github.com/bisoncorps/gophie">
+    <img src="https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square" alt="Documentation">
+  </a>
+  <a href="https://goreportcard.com/report/github.com/bisoncorps/gophie">
+    <img src="https://goreportcard.com/badge/github.com/bisoncorps/gophie" alt="Go Report Card">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
+  <a href="https://travis-ci.org/bisoncorps/gophie">
+    <img src="https://travis-ci.org/bisoncorps/gophie.svg?branch=master" alt="Build Status">
+  </a>
+</div>
+
 # Gophie
 
 Search and download movies without having to bump into ads. Feel free to add any new movie sites
 
-![Demo](assets/reel.jpeg)
-
-[![Documentation](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/bisoncorps/gophie)
-[![Go Report Card](https://goreportcard.com/badge/github.com/bisoncorps/gophie)](https://goreportcard.com/report/github.com/bisoncorps/gophie)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/bisoncorps/gophie.svg?branch=master)](https://travis-ci.org/bisoncorps/gophie)
 
 ## Installation
 With Golang installed
@@ -26,11 +37,14 @@ Alternatively download the Binaries and add to Path
 gophie
 
 ```bash
+Gophie
+
 Usage:
   gophie [command]
 
 Available Commands:
-  api         host gophie as an API on a PORT env variable, fallback to set argument                                                                
+  api         host gophie as an API on a PORT env variable, fallback to set argument
+  engines     Show summary and list of available engines
   help        Help about any command
   list        lists the recent movies by page number
   resume      resume downloads for previously stopped movies
@@ -38,12 +52,15 @@ Available Commands:
   version     Get Gophie Version
 
 Flags:
-      --config string   config file (default is $HOME/.gophie.yaml)
-      --engine string   The Engine to use for querying and downloading (default "NetNaija")                                                         
-  -h, --help            help for gophie
-  -t, --toggle          Help message for toggle
+  -e, --engine string       The Engine to use for querying and downloading (default "netnaija")
+  -h, --help                help for gophie
+  -o, --output-dir string   Path to download files to
+  -v, --verbose             Display Verbose logs
 
 Use "gophie [command] --help" for more information about a command.
+
+
+Gophie - Bisoncorp (2020) (https://github.com/bisoncorps/gophie)
 ```
 
 For Development use `go run main.go [command]`

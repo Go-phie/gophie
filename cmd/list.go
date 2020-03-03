@@ -39,6 +39,7 @@ func listPager(cmd *cobra.Command, pageNum int) {
 	prompt := promptui.Select{
 		Label: result.Query,
 		Items: items,
+		Size:  10,
 	}
 	choiceIndex, choice, err := prompt.Run()
 	if err != nil {

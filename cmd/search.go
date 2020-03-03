@@ -46,6 +46,7 @@ var searchCmd = &cobra.Command{
 		prompt := promptui.Select{
 			Label: result.Query,
 			Items: result.Titles(),
+			Size:  10,
 		}
 		_, choice, err := prompt.Run()
 		if err != nil {
