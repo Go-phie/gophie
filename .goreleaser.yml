@@ -1,0 +1,29 @@
+project_name: gophie
+
+builds:
+- env:
+  - CGO_ENABLED=0
+  binary: gophie
+  goos:
+      - windows
+      - darwin
+      - linux
+  goarch:
+    - 386
+    - amd64
+
+  ignore:
+    - goos: darwin
+      goarch: 386
+
+archives:
+  - name_template: "{{.Binary}}_{{.Os}}_{{.Arch}}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64

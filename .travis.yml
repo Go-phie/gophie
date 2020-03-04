@@ -21,6 +21,14 @@ script:
   - ./test.sh
 
 deploy:
-  provider: heroku
+- provider: script
+  skip_cleanup: true
+  script: curl -sL https://git.io/goreleaser | bash
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = linux
+
+- provider: heroku
   api_key: $HEROKU_PRODUCTION_API_KEY
   app: $HEROKU_APP_NAME
+
