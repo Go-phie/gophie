@@ -26,11 +26,7 @@ With Golang installed
 ```bash
 go get github.com/bisoncorps/gophie
 ```
-Alternatively download the Binaries and add to Path
-
-- Windows - [64 bit](bin/windows/64-bit/gophie)
-- Windows - [32-bit](bin/windows/32-bit/gophie)
-- Linux - [x86_64](bin/linux/x86-64/gophie)
+Or download from Github [Releases](https://github.com/bisoncorps/gophie/releases)
 
 ## Usage
 
