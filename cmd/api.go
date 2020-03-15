@@ -27,54 +27,105 @@ import (
 
 var port string
 
-// Handler : handles serving gophie
-func Handler(w http.ResponseWriter, r *http.Request) {
-	search := r.URL.Query().Get("search")
-	list := r.URL.Query().Get("list")
-	eng := r.URL.Query().Get("engine")
-	var (
-		result engine.SearchResult
-		site   engine.Engine
-	)
-	if search == "" && list == "" {
-		log.Debug("missing search and list argument")
-		http.Error(w, "search and list argument is missing in url", http.StatusForbidden)
-		return
-	}
-	if eng == "" {
-		// Use NetNaija as the default engine
-		site = engine.NewNetNaijaEngine()
-	} else {
-		site = engine.GetEngine(eng)
-	}
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
 
-	log.Debug("Using Engine ", site)
-	if search != "" {
-		log.Debug("Searching for ", search)
-		result = site.Search(search)
-	} else if list != "" {
-		log.Debug("listing page ", list)
-		pagenum, err := strconv.Atoi(list)
-		if err != nil {
-			http.Error(w, "Page must be a number", http.StatusBadRequest)
+func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
+		w.Header().Add("Content-Type", "application/json")
+
+		// Set Default Engine to NetNaija
+		engine := r.URL.Query().Get("engine")
+		if engine == "" {
+			q := r.URL.Query()
+			q.Add("engine", "netnaija")
+			r.URL.RawQuery = q.Encode()
 		}
-		result = site.List(pagenum)
+		handler.ServeHTTP(w, r)
+	}
+}
+
+// ListHandler : handles List Requests
+func ListHandler(w http.ResponseWriter, r *http.Request) {
+	eng := r.URL.Query().Get("engine")
+	site, err := engine.GetEngine(eng)
+	if site == nil {
+		http.Error(w, "Invalid Engine Param", http.StatusBadRequest)
+	}
+	pageNum, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		http.Error(w, "Page must be a number", http.StatusBadRequest)
 	}
 
-	// dump results
+	log.Debug("listing page ", pageNum)
+	result := site.List(pageNum)
 	b, err := json.Marshal(result.Movies)
 	if err != nil {
 		log.Fatal("failed to serialize response: ", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
-	enableCors(&w)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(b)
-	log.Debug("Completed search for ", search, list)
+	log.Debug("Completed query for ", pageNum)
 }
 
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+// SearchHandler : handles search requests
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	var (
+		result engine.SearchResult
+		site   engine.Engine
+	)
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		http.Error(w, "Query param must be added to url", http.StatusBadRequest)
+	}
+
+	eng := r.URL.Query().Get("engine")
+	site, err := engine.GetEngine(eng)
+	if err != nil {
+		http.Error(w, "Invalid Engine Param", http.StatusBadRequest)
+	}
+	log.Debug("Using Engine ", site)
+	log.Debug("Searching for ", query)
+	result = site.Search(query)
+
+	// dump results
+	b, err := json.Marshal(result.Movies)
+	if err != nil {
+		log.Error("failed to serialize response: ", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+	w.Write(b)
+	log.Debug("Completed search for ", query)
+}
+
+// EngineHandler : handles Engine Listing
+func EngineHandler(w http.ResponseWriter, r *http.Request) {
+	eng := r.URL.Query().Get("engine")
+	var (
+		response []byte
+		err      error
+	)
+	if eng != "" {
+		site, err := engine.GetEngine(eng)
+		if err != nil {
+			http.Error(w, "Invalid Engine Param", http.StatusBadRequest)
+		}
+		response, err = json.Marshal(site)
+		if err != nil {
+			log.Error("failed to serialize response: ", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	} else {
+		response, err = json.Marshal(engine.GetEngines())
+		if err != nil {
+			log.Error("failed to serialize response: ", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	}
+	w.Write(response)
 }
 
 // apiCmd represents the api command
@@ -83,7 +134,10 @@ var apiCmd = &cobra.Command{
 	Short: "host gophie as an API on a PORT env variable, fallback to set argument",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		http.HandleFunc("/", Handler)
+		http.HandleFunc("/search", getDefaultsMiddleware(SearchHandler))
+		http.HandleFunc("/list", getDefaultsMiddleware(ListHandler))
+		http.HandleFunc("/engine", EngineHandler)
+
 		log.Info("listening on ", port)
 		_, err := strconv.Atoi(port)
 		if err != nil {

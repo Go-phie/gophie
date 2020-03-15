@@ -30,6 +30,8 @@ Or download from Github [Releases](https://github.com/bisoncorps/gophie/releases
 
 ## Usage
 
+### CLI
+
 gophie
 
 ```bash
@@ -60,6 +62,16 @@ Gophie - Bisoncorp (2020) (https://github.com/bisoncorps/gophie)
 ```
 
 For Development use `go run main.go [command]`
+
+### API
+
+The available api endpoints with the possible params are 
+- Search `GET /search?query=query`
+- List `GET /list?page=pageNumber`
+- Engine `GET /engines`
+
+All endpoints have the following extra params that can be passed
+- `engine=engine`: defaults to `netnaija`
 
 ### Supported Engines
 

@@ -21,6 +21,26 @@ type Props struct {
 	Description string
 }
 
+// PropsJSON : JSON structure of all downloadable movies
+type PropsJSON struct {
+	Props
+	BaseURL   string
+	SearchURL string
+	ListURL   string
+}
+
+// MarshalJSON Props structure to return from api
+func (p *Props) MarshalJSON() ([]byte, error) {
+	props := PropsJSON{
+		Props:     *p,
+		BaseURL:   p.BaseURL.String(),
+		SearchURL: p.SearchURL.String(),
+		ListURL:   p.ListURL.String(),
+	}
+
+	return json.Marshal(props)
+}
+
 // Engine : interface for all engines
 type Engine interface {
 	Search(query string) SearchResult
@@ -116,8 +136,12 @@ func GetEngines() map[string]Engine {
 }
 
 // GetEngine : Return an engine
-func GetEngine(engine string) Engine {
-	return GetEngines()[strings.ToLower(engine)]
+func GetEngine(engine string) (Engine, error) {
+	e := GetEngines()[strings.ToLower(engine)]
+	if e == nil {
+		return nil, fmt.Errorf("Engine %s Does not exist", engine)
+	}
+	return e, nil
 }
 
 // Get the movie index context stored in Request

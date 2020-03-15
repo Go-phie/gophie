@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/bisoncorps/gophie/engine"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +61,11 @@ var showEngineCmd = &cobra.Command{
 	Short: "Show summary of engine ",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		b, err := json.MarshalIndent(engine.GetEngine(args[0]), "", "  ")
+		e, err := engine.GetEngine(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+		b, err := json.MarshalIndent(e, "", "  ")
 		if err != nil {
 			fmt.Println("error:", err)
 		}

@@ -27,7 +27,10 @@ import (
 var pageNum int
 
 func listPager(cmd *cobra.Command, pageNum int) {
-	selectedEngine := engine.GetEngine(viper.GetString("engine"))
+	selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	var result engine.SearchResult
 	var items []string
 	// Initialize process and show loader on terminal and store result in result

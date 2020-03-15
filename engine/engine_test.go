@@ -8,7 +8,7 @@ import (
 
 func TestNetNaija(t *testing.T) {
 	counter := map[string]int{}
-	scrapehandler := GetEngine("NetNaija")
+	scrapehandler, _ := GetEngine("NetNaija")
 	result := scrapehandler.Search("avenge")
 
 	if len(result.Movies) < 1 {

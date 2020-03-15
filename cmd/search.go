@@ -38,7 +38,10 @@ var searchCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Engine is set from root.go
-		selectedEngine := engine.GetEngine(viper.GetString("engine"))
+		selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
+		if err != nil {
+			log.Fatal(err)
+		}
 		query := strings.Join(args, " ")
 		var result engine.SearchResult
 		// Initialize process and show loader on terminal and store result in result
