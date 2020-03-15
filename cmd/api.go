@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/bisoncorps/gophie/engine"
 	log "github.com/sirupsen/logrus"
@@ -48,11 +47,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		site = engine.GetEngine(eng)
 	}
-	log.Info("Using Engine ", site)
+
+	log.Debug("Using Engine ", site)
 	if search != "" {
 		log.Debug("Searching for ", search)
-		query := strings.ReplaceAll(search, "+", " ")
-		result = site.Search(query)
+		result = site.Search(search)
 	} else if list != "" {
 		log.Debug("listing page ", list)
 		pagenum, _ := strconv.Atoi(list)

@@ -1,10 +1,10 @@
 package engine
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
-	//  "path"
 	"strconv"
 	"strings"
 
@@ -44,8 +44,32 @@ type Movie struct {
 	Source         string // The Engine From which it is gotten from
 }
 
+// MovieJSON : JSON structure of all downloadable movies
+type MovieJSON struct {
+	Movie
+	DownloadLink  string
+	SDownloadLink []string
+}
+
 func (m *Movie) String() string {
 	return fmt.Sprintf("%s (%v)", m.Title, m.Year)
+}
+
+// MarshalJSON Json structure to return from api
+func (m *Movie) MarshalJSON() ([]byte, error) {
+	var sDownloadLink []string
+	for _, link := range m.SDownloadLink {
+		sDownloadLink = append(sDownloadLink, link.String())
+	}
+
+	movie := MovieJSON{
+		Movie:         *m,
+		DownloadLink:  m.DownloadLink.String(),
+		SDownloadLink: sDownloadLink,
+	}
+
+	return json.Marshal(movie)
+
 }
 
 // SearchResult : the results of search from engine
