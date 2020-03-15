@@ -34,6 +34,7 @@ Or download from Github [Releases](https://github.com/bisoncorps/gophie/releases
 
 gophie
 
+![Demo](assets/demo.gif)
 ```bash
 Gophie
 

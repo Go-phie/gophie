@@ -102,6 +102,7 @@ func (f *Downloader) DownloadFile() error {
 			return err
 		}
 	}
+	log.Infof("Downloaded %s to %s", f.Name, f.Dir)
 	return nil
 }
 

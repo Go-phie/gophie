@@ -7,7 +7,7 @@ import (
 )
 
 func TestAPI(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(Handler))
+	ts := httptest.NewServer(http.HandlerFunc(SearchHandler))
 	defer ts.Close()
 
 	res, _ := http.Get(ts.URL + "/search?query=good+boys")
