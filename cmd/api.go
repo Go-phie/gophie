@@ -54,7 +54,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		result = site.Search(search)
 	} else if list != "" {
 		log.Debug("listing page ", list)
-		pagenum, _ := strconv.Atoi(list)
+		pagenum, err := strconv.Atoi(list)
+		if err != nil {
+			http.Error(w, "Page must be a number", http.StatusBadRequest)
+		}
 		result = site.List(pagenum)
 	}
 
@@ -62,11 +65,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	b, err := json.Marshal(result.Movies)
 	if err != nil {
 		log.Fatal("failed to serialize response: ", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 	enableCors(&w)
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(b)
-	log.Debug("Completed search for", search, list)
+	log.Debug("Completed search for ", search, list)
 }
 
 func enableCors(w *http.ResponseWriter) {
