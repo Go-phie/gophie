@@ -1,0 +1,391 @@
+openapi: 3.0.0
+info:
+  title: Gophie
+  version: '1.0'
+  contact:
+    name: Bisoncorps
+    email: diretnandomnan@gmail.com
+    url: 'https://github.com/bisoncorps'
+  license:
+    url: 'https://github.com/bisoncorps/gophie/blob/master/LICENSE'
+    name: License(GNU AGPL v3.0)
+  description: |-
+    I was visiting my favourite low data movie download site, but that day was particularly annoying. I moved to click and kept getting redirected to nude pictures. I just want free movies, I cried. Bisoncorps then proceeded to create Gophie. It is a CLI tool which enables you to be the cheapskate you are without getting guilt tripped. It was eventually turned into a functional API to enable searching and listing of movies.
+
+    ## Applications
+
+    Gophie is available as a CLI and has also been used to build several other products
+
+    - [Gophie Web](https://github.com/deven96/gophie-web)
+    - [Beetube bot](https://github.com/kodjunkie/beetube-bot)
+servers:
+  - url: 'https://gophie.herokuapp.com'
+    description: Heroku server
+paths:
+  /list:
+    get:
+      summary: List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+              examples:
+                Example (page=1):
+                  value:
+                    - Index: 0
+                      Title: 'Yomeddine (2018) [Arabic]'
+                      CoverPhotoLink: 'https://img.netnaija.com/fQMHHK.jpg'
+                      Description: ''
+                      Size: (277.36MB)
+                      Year: 2018
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/nmmbAJwZp19/yomeddine-2018-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 1
+                      Title: 'Star Wars: The Rise Of Skywalker (2019)'
+                      CoverPhotoLink: 'https://img.netnaija.com/4QMHHK.jpg'
+                      Description: ''
+                      Size: (392.46MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/bSgXjGuJZ93/star-wars-the-rise-of-skywalker-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 2
+                      Title: 'Go! (2020)'
+                      CoverPhotoLink: 'https://img.netnaija.com/mFMHHK.jpg'
+                      Description: ''
+                      Size: (281.51MB)
+                      Year: 2020
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/FBMknjEay61/go-2020-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 3
+                      Title: Abstruse (2019)
+                      CoverPhotoLink: 'https://img.netnaija.com/M6MHHK.jpg'
+                      Description: ''
+                      Size: (147.21MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/dirwKkClP79/abstruse-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 4
+                      Title: Lost Girls (2020)
+                      CoverPhotoLink: 'https://img.netnaija.com/z6MHHK.jpg'
+                      Description: ''
+                      Size: (131.64MB)
+                      Year: 2020
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/cMaHUgwZF86/lost-girls-2020-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 5
+                      Title: Tuscaloosa (2019)
+                      CoverPhotoLink: 'https://img.netnaija.com/r6MHHK.jpg'
+                      Description: ''
+                      Size: (233.44MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/FPzATPvgW35/tuscaloosa-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 6
+                      Title: Stargirl (2020)
+                      CoverPhotoLink: 'https://img.netnaija.com/96MHHK.jpg'
+                      Description: ''
+                      Size: (280.59MB)
+                      Year: 2020
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/vEOBWZxDu88/stargirl-2020-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 7
+                      Title: The Postcard Killings (2020)
+                      CoverPhotoLink: 'https://img.netnaija.com/s6MHHK.jpg'
+                      Description: ''
+                      Size: (196.14MB)
+                      Year: 2020
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/sWAmNTnxC44/the-postcard-killings-2020-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 8
+                      Title: Gemini Man (2019)
+                      CoverPhotoLink: 'https://img.netnaija.com/_Y7HHK.jpg'
+                      Description: ''
+                      Size: (325.58MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/AlkkXQiQm66/gemini-man-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 9
+                      Title: 'Extreme Job (2019) [Korean]'
+                      CoverPhotoLink: 'https://img.netnaija.com/qnMHHK.jpg'
+                      Description: ''
+                      Size: (245.19MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/ECPINpwfu36/extreme-job-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 10
+                      Title: Foxtrot Six (2019)
+                      CoverPhotoLink: 'https://img.netnaija.com/XnMHHK.jpg'
+                      Description: ''
+                      Size: (219MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/LXFoPvoFv72/foxtrot-six-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 11
+                      Title: Guilty (2020)
+                      CoverPhotoLink: 'https://img.netnaija.com/3nMHHK.jpg'
+                      Description: ''
+                      Size: (247.89MB)
+                      Year: 2020
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/KiwZkuTNm62/guilty-2020-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 12
+                      Title: 'The Gangster, the Cop, the Devil (2019) [Korean]'
+                      CoverPhotoLink: 'https://img.netnaija.com/znMHHK.jpg'
+                      Description: ''
+                      Size: (269.17MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/kvwrwwVZo10/the-gangster-the-cop-the-devil-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 13
+                      Title: 'Chhapaak (2020) [Indian]'
+                      CoverPhotoLink: 'https://img.netnaija.com/rnMHHK.jpg'
+                      Description: ''
+                      Size: (284.06MB)
+                      Year: 2020
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/LQKqiTsYS86/chhapaak-2020-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: ''
+            multipart/form-data:
+              schema:
+                type: object
+                properties: {}
+      operationId: get-list
+      description: Get recent movies from an engine by page where 1 is the most recent page
+      parameters:
+        - schema:
+            type: integer
+          in: query
+          name: page
+          description: page number to retrieve
+          required: true
+        - schema:
+            type: string
+            default: netnaija
+          in: query
+          name: engine
+          description: engine to use
+  /engine:
+    get:
+      summary: Engine
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    $ref: '#/components/schemas/Engine'
+              examples:
+                example-1:
+                  value:
+                    fzmovies:
+                      Name: FzMovies
+                      Description: ''
+                      BaseURL: 'https://www.fzmovies.net/'
+                      SearchURL: 'https://www.fzmovies.net/csearch.php'
+                      ListURL: 'https://www.fzmovies.net/movieslist.php'
+                    netnaija:
+                      Name: NetNaija
+                      Description: ''
+                      BaseURL: 'https://www.thenetnaija.com/'
+                      SearchURL: 'https://www.thenetnaija.com/search'
+                      ListURL: 'https://www.thenetnaija.com/videos/movies/'
+      operationId: get-engine
+      description: Returns the engine descriptions on gophie
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: engine
+          description: engine to check
+      requestBody: {}
+  /search:
+    get:
+      summary: Search
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+              examples:
+                Example (query=jumanji):
+                  value:
+                    - Index: 0
+                      Title: 'Jumanji: The Next Level (2019)'
+                      CoverPhotoLink: 'https://img.netnaija.com/SMJHHK.jpg'
+                      Description: "As the gang return to Jumanji to rescue one of their own, they discover that nothing is as they expect. The players will have to brave parts unknown and unexplored in order to escape the world's most dangerous game. Jumanji: The Next Level (2019) Genre: Action"
+                      Size: (349.17MB)
+                      Year: 2019
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/TKldXyqAY65/jumanji-the-next-level-2019-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+                    - Index: 1
+                      Title: 'Jumanji: Welcome to the Jungle (2017)'
+                      CoverPhotoLink: 'https://img.netnaija.com/4X4HHK.jpg'
+                      Description: "into the game's jungle setting, literally becoming the adult avatars they chose. What they discover is that you don't just play Jumanji - you must survive it. To beat the game and return to the real world, they'll have to go on the most dangerous adventure of"
+                      Size: (304.44MB)
+                      Year: 2017
+                      IsSeries: false
+                      UploadDate: ''
+                      Source: NetNaija
+                      DownloadLink: 'https://www.downloadbetter.com/YdAlmIlIf00/jumanji-welcome-to-the-jungle-2017-netnaija-com-mp4.html?d=1'
+                      SDownloadLink: null
+      operationId: get-search
+      description: Search for a movie
+      parameters:
+        - schema:
+            type: string
+            default: netnaija
+          in: query
+          description: engine
+          name: engine
+        - schema:
+            type: string
+          in: query
+          name: query
+          description: query to search for
+          required: true
+components:
+  schemas:
+    Movie:
+      title: Movie model
+      type: object
+      properties:
+        Index:
+          type: integer
+          description: non-unique id
+        Title:
+          type: string
+          description: Title of the movie
+        CoverPhotoLink:
+          type: string
+          description: Link to the cover photo
+        Description:
+          type: string
+          description: Description of the movie
+        Size:
+          type: string
+          description: Size of the movie
+        DownloadLInk:
+          type: string
+          description: Link to download the movie
+        Year:
+          description: Year the movie
+          type: number
+        SDownloadLink:
+          type:
+            - 'null'
+            - array
+          description: If the movie is a series then this might contain links to the individual parts
+          items:
+            type: string
+        UploadDate:
+          type: string
+          description: Date the movie was uploaded
+        Source:
+          type: string
+          description: The engine the movie was retrieved from
+      x-examples:
+        example-1:
+          Index: 0
+          Title: All the Bright Places (2020)
+          CoverPhotoLink: 'https://img.netnaija.com/NGMHHK.jpg'
+          Description: ''
+          Size: (242.26MB)
+          DownloadLink: 'https://www.downloadbetter.com/RVMqXLxQs70/all-the-bright-places-2020-netnaija-com-mp4.html?d=1'
+          Year: 2020
+          IsSeries: false
+          SDownloadLink: null
+          UploadDate: ''
+          Source: NetNaija
+      description: Contains information concerning a movie
+    Engine:
+      title: Engine model
+      type: object
+      description: Engines are the representation of the sites that have been scraped
+      properties:
+        Name:
+          type: string
+          description: Name of the engine(site)
+        Description:
+          type: string
+          description: Brief description of the engine
+        BaseURL:
+          type: string
+          description: Main URL of the engine
+        SearchURL:
+          type: string
+          description: Search URL of the engine
+        ListURL:
+          type: string
+          description: List URL of the engine
+      x-examples:
+        example-1:
+          Name: NetNaija
+          Description: ''
+          BaseURL: 'https://www.thenetnaija.com/'
+          SearchURL: 'https://www.thenetnaija.com/search'
+          ListURL: 'https://www.thenetnaija.com/videos/movies/'
+  securitySchemes: {}
