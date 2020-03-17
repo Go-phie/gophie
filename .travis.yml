@@ -23,6 +23,11 @@ matrix:
         
     - language: node_js
       node_js: 7
+      cache:
+        directories:
+          # Replace "grunt-cli" with whatever global binary you're using
+          - $(npm config get prefix)/bin/stoplight
+          - $(npm config get prefix)/lib/node_modules
       script:
         npm i -g @stoplight/cli
       deploy:

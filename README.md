@@ -68,6 +68,13 @@ For Development use `go run main.go [command]`
 
 The complete API documentation is available on [Stoplight](https://stoplight.io/p/docs/gh/bisoncorps/gophie/Gophie.v1.yaml?srn=gh/bisoncorps/gophie/)
 
+
+## Deployment
+
+The deployed version is available on [Heroku](https://gophie.herokuapp.com). Please read the API documentation for usage
+
+## Todo
+
 - [x] Create cli and api
 - [x] Fix NetNaija link issue
 - [x] Setup CI/CD pipeline to autodeploy
@@ -81,7 +88,7 @@ The complete API documentation is available on [Stoplight](https://stoplight.io/
 - [x] Write initial tests
 - [x] Create React app to consume hosted API
 - [x] Implement resume downloads
-- [ ] Increment tests
+- [ ] Increment tests to at least 90%
 
 ## License
 
