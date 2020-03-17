@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -40,7 +41,9 @@ func NewNetNaijaEngine() *NetNaijaEngine {
 	netNaijaEngine := NetNaijaEngine{}
 	netNaijaEngine.Name = "NetNaija"
 	netNaijaEngine.BaseURL = baseURL
-	netNaijaEngine.Description = ""
+	netNaijaEngine.Description = `
+			Nigerian forum and media download center. 
+			Developed and owned by Analike Emmanuel Bridge`
 	netNaijaEngine.SearchURL = searchURL
 	netNaijaEngine.ListURL = listURL
 	return &netNaijaEngine
@@ -74,6 +77,7 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 		return []Movie{}, fmt.Errorf("Invalid mode %v", mode)
 	}
 
+	re := regexp.MustCompile(`\((.*)\)`)
 	movieIndex := 0
 	c := colly.NewCollector(
 		// Cache responses to prevent multiple download of pages
@@ -114,6 +118,13 @@ func (engine *NetNaijaEngine) Scrape(mode string) ([]Movie, error) {
 			}
 			movie.DownloadLink = downloadLink
 			if movie.Title != "" {
+				year := re.FindStringSubmatch(movie.Title)
+				if len(year) > 1 {
+					intYear, err := strconv.Atoi(year[1])
+					if err == nil {
+						movie.Year = intYear
+					}
+				}
 				movies = append(movies, movie)
 				downloadLinkCollector.Visit(movie.DownloadLink.String())
 				movieIndex++

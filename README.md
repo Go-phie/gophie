@@ -66,24 +66,7 @@ For Development use `go run main.go [command]`
 
 ### API
 
-The available api endpoints with the possible params are 
-- Search `GET /search?query=query`
-- List `GET /list?page=pageNumber`
-- Engine `GET /engines`
-
-All endpoints have the following extra params that can be passed
-- `engine=engine`: defaults to `netnaija`
-
-### Supported Engines
-
-- NetNaija
-- FzMovies
-
-## Deployed
-
-Deployed version is hosted [here](https://gophie.herokuapp.com)
-
-## Todo 
+The complete API documentation is available on [Stoplight](https://stoplight.io/p/docs/gh/bisoncorps/gophie/Gophie.v1.yaml?srn=gh/bisoncorps/gophie/)
 
 - [x] Create cli and api
 - [x] Fix NetNaija link issue
@@ -100,15 +83,16 @@ Deployed version is hosted [here](https://gophie.herokuapp.com)
 - [x] Implement resume downloads
 - [ ] Increment tests
 
-## License (MIT)
+## License
 
-This project is opened under the [MIT 2.0 License](https://github.com/bisoncorps/gophie/blob/master/LICENSE) which allows very broad use for both academic and commercial purposes.
+This project is opened under the [GNU AGPLv3](https://github.com/bisoncorps/gophie/blob/master/LICENSE) which allows very broad use for both academic and commercial purposes.
 
 
 ## Credits
-Library | Use
+Library/Resource | Use
 ------- | -----
 [github.com/gocolly/colly](https://github.com/gocolly/colly) | scraping the net for links
 [github.com/manifoldco/promptui](https://github.com/manifoldco/promptui/) | interactive CLI
 [github.com/spf13/cobra](https://github.com/spf13/cobra) | CLI interface
 [github.com/iawia002/annie](https://github.com/iawia002/annie) | Downloader (resume capabilities)
+[Stoplight](https://stoplight.io) | Generating API docs

@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 	"strconv"
 
@@ -44,6 +45,21 @@ func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 			r.URL.RawQuery = q.Encode()
 		}
 		handler.ServeHTTP(w, r)
+	}
+}
+
+// DocHandler : renders iframe pointing to hosted docs
+func DocHandler(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	w.Header().Add("Content-Type", "text/html")
+	tmpl, err := template.ParseFiles("index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, "None"); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -104,6 +120,8 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 // EngineHandler : handles Engine Listing
 func EngineHandler(w http.ResponseWriter, r *http.Request) {
 	eng := r.URL.Query().Get("engine")
+	enableCors(&w)
+	w.Header().Add("Content-Type", "application/json")
 	var (
 		response []byte
 		err      error
@@ -137,6 +155,7 @@ var apiCmd = &cobra.Command{
 		http.HandleFunc("/search", getDefaultsMiddleware(SearchHandler))
 		http.HandleFunc("/list", getDefaultsMiddleware(ListHandler))
 		http.HandleFunc("/engine", EngineHandler)
+		http.HandleFunc("/", DocHandler)
 
 		log.Info("listening on ", port)
 		_, err := strconv.Atoi(port)

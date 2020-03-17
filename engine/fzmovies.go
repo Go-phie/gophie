@@ -41,7 +41,7 @@ func NewFzEngine() *FzEngine {
 	fzEngine := FzEngine{}
 	fzEngine.Name = "FzMovies"
 	fzEngine.BaseURL = baseURL
-	fzEngine.Description = ""
+	fzEngine.Description = `FzMovies is a site where you can find Bollywood, Hollywood and DHollywood Movies.`
 	fzEngine.SearchURL = searchURL
 	fzEngine.ListURL = listURL
 	return &fzEngine

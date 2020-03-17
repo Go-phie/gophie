@@ -6,10 +6,9 @@ import (
 	"testing"
 )
 
-func TestNetNaija(t *testing.T) {
+func testResults(t *testing.T, engine Engine) {
 	counter := map[string]int{}
-	scrapehandler, _ := GetEngine("NetNaija")
-	result := scrapehandler.Search("avenge")
+	result := engine.Search("jumanji")
 
 	if len(result.Movies) < 1 {
 		t.Errorf("No movies returned")
@@ -28,5 +27,11 @@ func TestNetNaija(t *testing.T) {
 			}
 		}
 	}
+}
 
+func TestEngines(t *testing.T) {
+	engines := GetEngines()
+	for _, engine := range engines {
+		testResults(t, engine)
+	}
 }
