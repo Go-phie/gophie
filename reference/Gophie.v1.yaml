@@ -18,6 +18,14 @@ info:
 
     - [Gophie Web](https://github.com/deven96/gophie-web)
     - [Beetube bot](https://github.com/kodjunkie/beetube-bot)
+
+    ## Supported Engines
+
+    Scraping is a tricky job. Not all scrapers are perfectly implemented to catch edge cases and occassionally some download links provided may not be the final links. That being said, the supported engines are
+
+    - [NetNaija](https://www.thenetnaija.com)
+    - [FzMovies](https://www.fzmovies.net)
+    - [BestHDMovies](https://besthdmovies.top)
 servers:
   - url: 'https://gophie.herokuapp.com'
     description: Heroku server
@@ -233,15 +241,21 @@ paths:
               examples:
                 example-1:
                   value:
+                    besthdmovies:
+                      Name: BestHDMovies
+                      Description: BestHDMovies is a site where you can find high quality Hollywood and Bollywood mkv movies
+                      BaseURL: 'https://www.besthdmovies.top/'
+                      SearchURL: 'https://www.besthdmovies.top/'
+                      ListURL: 'https://www.besthdmovies.top/new-hd-movies/'
                     fzmovies:
                       Name: FzMovies
-                      Description: ''
+                      Description: 'FzMovies is a site where you can find Bollywood, Hollywood and DHollywood Movies.'
                       BaseURL: 'https://www.fzmovies.net/'
                       SearchURL: 'https://www.fzmovies.net/csearch.php'
                       ListURL: 'https://www.fzmovies.net/movieslist.php'
                     netnaija:
                       Name: NetNaija
-                      Description: ''
+                      Description: "\n\t\t\tNigerian forum and media download center. \n\t\t\tDeveloped and owned by Analike Emmanuel Bridge"
                       BaseURL: 'https://www.thenetnaija.com/'
                       SearchURL: 'https://www.thenetnaija.com/search'
                       ListURL: 'https://www.thenetnaija.com/videos/movies/'

@@ -18,25 +18,19 @@ matrix:
         - provider: heroku
           api_key: $HEROKU_PRODUCTION_API_KEY
           app: $HEROKU_APP_NAME
-          on:
-            tags: true
         
     - language: node_js
-      node_js: 7
-      cache:
-        directories:
-          # Replace "grunt-cli" with whatever global binary you're using
-          - $(npm config get prefix)/bin/stoplight
-          - $(npm config get prefix)/lib/node_modules
+      node_js: 10
+      env:
+        - REPLACE="#!\/usr\/bin\/env\ node"
       script:
-        npm i -g @stoplight/cli
+        - npm i -g @stoplight/cli
+        - sed -i "1s/.*/$REPLACE/" $(npm config get prefix)/lib/node_modules/@stoplight/cli/bin/stoplight.js
       deploy:
         # deploy docs
         - provider: script
           skip_cleanup: true
-          script: stoplight publish --token $SPOTLIGHT_TOKEN --url https://stoplight.io/api
-          on:
-            tags: true
+          script: $(npm config get prefix)/bin/stoplight publish --token $SPOTLIGHT_TOKEN --url https://stoplight.io/api
         
 
 notifications:
