@@ -20,7 +20,6 @@ import (
 
 	"github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
-	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,23 +42,7 @@ var searchCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		query := strings.Join(args, " ")
-		var result engine.SearchResult
-		// Initialize process and show loader on terminal and store result in result
-		result = ProcessFetchTask(func() engine.SearchResult { return selectedEngine.Search(query) })
-		prompt := promptui.Select{
-			Label: result.Query,
-			Items: result.Titles(),
-			Size:  10,
-		}
-		_, choice, err := prompt.Run()
-		if err != nil {
-			log.Fatalf("Prompt failed %v\n", err)
-		}
-
-		selectedMovie, err := result.GetMovieByTitle(choice)
-		if err != nil {
-			log.Fatal(err)
-		}
+		selectedMovie := processSearch(query, selectedEngine)
 		log.Debugf("Movie: %v\n", selectedMovie)
 		// Start Movie Download
 		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
@@ -70,4 +53,16 @@ var searchCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(searchCmd)
+}
+
+func processSearch(query string, e engine.Engine) engine.Movie {
+	// Initialize process and show loader on terminal and store result in result
+	result := ProcessFetchTask(func() engine.SearchResult { return e.Search(query) })
+	_, choice := SelectOpts(result.Query, result.Titles())
+
+	selectedMovie, err := result.GetMovieByTitle(choice)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return selectedMovie
 }

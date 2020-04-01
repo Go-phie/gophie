@@ -12,41 +12,109 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Props : The scraping engine Properties and description about the engine (e.g NetNaijaEngine)
-type Props struct {
-	Name        string
-	BaseURL     *url.URL // The Base URL for the engine
-	SearchURL   *url.URL // URL for searching
-	ListURL     *url.URL // URL to return movie lists
-	Description string
-}
+// Mode : The mode of operation for scraping
+type Mode int
 
-// PropsJSON : JSON structure of all downloadable movies
-type PropsJSON struct {
-	Props
-	BaseURL   string
-	SearchURL string
-	ListURL   string
-}
+const (
+	// SearchMode : in this mode a query is searched for
+	SearchMode Mode = iota
+	// ListMode : in this mode a page is looked up
+	ListMode
+)
 
-// MarshalJSON Props structure to return from api
-func (p *Props) MarshalJSON() ([]byte, error) {
-	props := PropsJSON{
-		Props:     *p,
-		BaseURL:   p.BaseURL.String(),
-		SearchURL: p.SearchURL.String(),
-		ListURL:   p.ListURL.String(),
-	}
-
-	return json.Marshal(props)
+func (m Mode) String() string {
+	return [...]string{"Search", "List"}[m]
 }
 
 // Engine : interface for all engines
 type Engine interface {
+	getParseURL() *url.URL
 	Search(query string) SearchResult
-	Scrape(mode string) ([]Movie, error)
 	List(page int) SearchResult
 	String() string
+	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
+	parseSingleMovie(el *colly.HTMLElement, index int) (Movie, error)
+
+	// getParseAttrs : get the attributes to use to parse a returned soup
+	// the first return string is the part of the html to be parsed e.g `body`, `main`
+	// the second return string is the attributes to be used in parsing the element specified
+	// by the first return
+	getParseAttrs() (string, string, error)
+
+	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
+	updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie)
+}
+
+// Scrape : Parse queries a url and return results
+func Scrape(engine Engine) ([]Movie, error) {
+	c := colly.NewCollector(
+		// Cache responses to prevent multiple download of pages
+		// even if the collector is restarted
+		colly.CacheDir("./gophie_cache"),
+	)
+	// Another collector for download Links
+	downloadLinkCollector := c.Clone()
+
+	movieIndex := 0
+	var movies []Movie
+
+	// Any Extras setup for downloads using can be specified in the function
+	engine.updateDownloadProps(downloadLinkCollector, &movies)
+
+	main, article, err := engine.getParseAttrs()
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.OnHTML(main, func(e *colly.HTMLElement) {
+		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
+			movie, err := engine.parseSingleMovie(el, movieIndex)
+			if err != nil {
+				log.Errorf("%v could not be parsed", movie)
+			} else {
+				movies = append(movies, movie)
+				downloadLinkCollector.Visit(movie.DownloadLink.String())
+				movieIndex++
+			}
+		})
+	})
+
+	c.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("Accept", "text/html")
+		log.Debugf("Visiting %v", r.URL.String())
+	})
+
+	c.OnResponse(func(r *colly.Response) {
+		log.Debugf("Done %v", r.Request.URL.String())
+	})
+
+	// Attach Movie Index to Context before making visits
+	// Adding Movie Index to context ensures we can fetch a reference to the
+	// movie details when we need it
+	downloadLinkCollector.OnRequest(func(r *colly.Request) {
+		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml")
+		for i, movie := range movies {
+			if movie.DownloadLink.String() == r.URL.String() {
+				log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
+				r.Ctx.Put("movieIndex", strconv.Itoa(i))
+			}
+		}
+	})
+
+	// If Response Content Type is not Text, Abort the Request to prevent fully downloading the
+	// body in case of other types like mp4
+	downloadLinkCollector.OnResponseHeaders(func(r *colly.Response) {
+		if !strings.Contains(r.Headers.Get("Content-Type"), "text") {
+			r.Request.Abort()
+			log.Debugf("Response %s is not text/html. Aborting request", r.Request.URL)
+		}
+	})
+
+	downloadLinkCollector.OnResponse(func(r *colly.Response) {
+		movie := &movies[getMovieIndexFromCtx(r.Request)]
+		log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
+	})
+	c.Visit(engine.getParseURL().String())
+	return movies, nil
 }
 
 // Movie : the structure of all downloadable movies
@@ -132,6 +200,7 @@ func GetEngines() map[string]Engine {
 	engines := make(map[string]Engine)
 	engines["netnaija"] = NewNetNaijaEngine()
 	engines["fzmovies"] = NewFzEngine()
+	engines["besthdmovies"] = NewBestHDEngine()
 	return engines
 }
 

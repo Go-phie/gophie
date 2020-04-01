@@ -18,7 +18,6 @@ package cmd
 import (
 	"github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
-	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,41 +25,12 @@ import (
 
 var pageNum int
 
-func listPager(cmd *cobra.Command, pageNum int) {
+func listPager(pageNum int) {
 	selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	var result engine.SearchResult
-	var items []string
-	// Initialize process and show loader on terminal and store result in result
-	result = ProcessFetchTask(func() engine.SearchResult { return selectedEngine.List(pageNum) })
-	items = append(result.Titles(), []string{">>> Next Page"}...)
-	if pageNum != 1 {
-		items = append([]string{"<<< Previous Page"}, items...)
-	}
-	prompt := promptui.Select{
-		Label: result.Query,
-		Items: items,
-		Size:  10,
-	}
-	choiceIndex, choice, err := prompt.Run()
-	if err != nil {
-		log.Fatalf("Prompt failed: %v\n", err)
-	}
-
-	if choiceIndex != len(items)-1 {
-		if choiceIndex == 0 && pageNum != 1 {
-			listPager(cmd, pageNum-1)
-		}
-	} else {
-		listPager(cmd, pageNum+1)
-	}
-
-	selectedMovie, err := result.GetMovieByTitle(choice)
-	if err != nil {
-		log.Fatal(err)
-	}
+	selectedMovie := processList(pageNum, selectedEngine)
 	log.Debugf("Movie: %v\n", selectedMovie)
 	// Start Movie Download
 	if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
@@ -74,11 +44,37 @@ var listCmd = &cobra.Command{
 	Short: "lists the recent movies by page number",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		listPager(cmd, pageNum)
+		listPager(pageNum)
 	},
 }
 
 func init() {
 	listCmd.Flags().IntVarP(&pageNum, "page", "p", 1, "Page Number to search and return from")
 	rootCmd.AddCommand(listCmd)
+}
+
+// Just abstract away the listing process so that it can be reused in other commands
+func processList(pageNum int, e engine.Engine) engine.Movie {
+	// Initialize process and show loader on terminal and store result in result
+	result := ProcessFetchTask(func() engine.SearchResult { return e.List(pageNum) })
+	var items []string
+	items = append(result.Titles(), []string{">>> Next Page"}...)
+	if pageNum != 1 {
+		items = append([]string{"<<< Previous Page"}, items...)
+	}
+	choiceIndex, choice := SelectOpts(result.Query, items)
+
+	if choiceIndex != len(items)-1 {
+		if choiceIndex == 0 && pageNum != 1 {
+			listPager(pageNum - 1)
+		}
+	} else {
+		listPager(pageNum + 1)
+	}
+
+	selectedMovie, err := result.GetMovieByTitle(choice)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return selectedMovie
 }

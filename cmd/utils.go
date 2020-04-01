@@ -6,6 +6,8 @@ import (
 
 	"github.com/bisoncorps/gophie/engine"
 	"github.com/briandowns/spinner"
+	"github.com/manifoldco/promptui"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -27,4 +29,19 @@ func ProcessFetchTask(fn fetchFunc) engine.SearchResult {
 		result = fn()
 	}
 	return result
+}
+
+// SelectOpts : use promptui to select amongst options
+func SelectOpts(title string, options []string) (int, string) {
+	prompt := promptui.Select{
+		Label: "",
+		Items: options,
+		Size:  10,
+	}
+
+	index, result, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed %v\n", err)
+	}
+	return index, result
 }

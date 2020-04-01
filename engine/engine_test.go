@@ -20,8 +20,9 @@ func testResults(t *testing.T, engine Engine) {
 				counter[movie.DownloadLink.String()] = 1
 			}
 			if movie.IsSeries == false {
-				if !(strings.HasSuffix(movie.DownloadLink.String(), "1") || strings.HasSuffix(movie.DownloadLink.String(), ".mp4")) {
-					fmt.Println(movie.DownloadLink.String())
+				downloadlink := movie.DownloadLink.String()
+				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=")) {
+					fmt.Println(downloadlink)
 					t.Errorf("Could not obtain link for single movie")
 				}
 			}
