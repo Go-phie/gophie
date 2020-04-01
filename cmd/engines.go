@@ -32,8 +32,8 @@ var engineCmd = &cobra.Command{
 	Short: "Show summary and list of available engines",
 	Long: `Lots of engines have been used to implement gophie. 
 
-		gophie engine list - All available engines
-		gophie engine show - Details about a particular engine
+		gophie engine list (All available engines)
+		gophie engine show (Details about a particular engine)
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(`Engines Summaries and List

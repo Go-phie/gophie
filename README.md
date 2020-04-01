@@ -1,29 +1,39 @@
 <p align="center"><img src="assets/reel.png" alt="Gophie" height="100px"></p>
 
 <div align="center">
-  <a href="https://godoc.org/github.com/bisoncorps/gophie">
+  <a href="https://godoc.org/github.com/go-phie/gophie">
     <img src="https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square" alt="Documentation">
   </a>
-  <a href="https://goreportcard.com/report/github.com/bisoncorps/gophie">
-    <img src="https://goreportcard.com/badge/github.com/bisoncorps/gophie" alt="Go Report Card">
+  <a href="https://goreportcard.com/report/github.com/go-phie/gophie">
+    <img src="https://goreportcard.com/badge/github.com/go-phie/gophie" alt="Go Report Card">
   </a>
-  <a href="https://travis-ci.com/bisoncorps/gophie">
-    <img src="https://travis-ci.com/bisoncorps/gophie.svg?branch=master" alt="Build Status">
+  <a href="https://travis-ci.com/go-phie/gophie">
+    <img src="https://travis-ci.com/go-phie/gophie.svg?branch=master" alt="Build Status">
   </a>
 </div>
 
 # Gophie
 
-Search and download movies without having to bump into ads. Feel free to add any new movie sites
+Search, stream and download movies without having to bump into ads. Feel free to add any new movie sites
 
+## What is Gophie
+
+Gophie is a tool to help you search, stream and download movies from movie sites without going through all the stress of by-passing ads. Currently, the following sites are supported:
+- NetNaija
+- FzMovies
+- BestHD
+
+More Sites and more variations (such as animes and series) will come in to play quite soon.
+
+Gophie also has [mobile](https://github.com/Go-phie/gophie-mobile) and [web](https://github.com/Go-phie/gophie-web) clients.
 
 ## Installation
 With Golang installed
 
 ```bash
-go get github.com/bisoncorps/gophie
+go get github.com/go-phie/gophie
 ```
-Or download from Github [Releases](https://github.com/bisoncorps/gophie/releases)
+Or download from Github [Releases](https://github.com/go-phie/gophie/releases)
 
 ## Usage
 
@@ -58,40 +68,23 @@ Flags:
 Use "gophie [command] --help" for more information about a command.
 
 
-Gophie - Bisoncorp (2020) (https://github.com/bisoncorps/gophie)
+Gophie - Bisoncorp (2020) (https://github.com/go-phie/gophie)
 ```
 
 For Development use `go run main.go [command]`
 
 ### API
 
-The complete API documentation is available on [Stoplight](https://stoplight.io/p/docs/gh/bisoncorps/gophie/Gophie.v1.yaml?srn=gh/bisoncorps/gophie/)
+The complete API documentation is available on [Stoplight](https://stoplight.io/p/docs/gh/go-phie/gophie/Gophie.v1.yaml?srn=gh/go-phie/gophie/)
 
 
 ## Deployment
 
-The deployed version is available on [Heroku](https://gophie.herokuapp.com). Please read the API documentation for usage
-
-## Todo
-
-- [x] Create cli and api
-- [x] Fix NetNaija link issue
-- [x] Setup CI/CD pipeline to autodeploy
-- [x] Patch download pkg into CLI with progress bar
-- [x] Host API on Heroku
-- [x] Update README
-- [x] Generate binaries for all platforms
-- [x] Create list movies by page feature
-- [x] Add list movies by page feature into api
-- [x] Write first ever tech article using Project experience
-- [x] Write initial tests
-- [x] Create React app to consume hosted API
-- [x] Implement resume downloads
-- [ ] Increment tests to at least 90%
+The deployed API version from `gophie api` is available on [Heroku](https://gophie.herokuapp.com). Please read the API documentation for usage
 
 ## License
 
-This project is opened under the [GNU AGPLv3](https://github.com/bisoncorps/gophie/blob/master/LICENSE) which allows very broad use for both academic and commercial purposes.
+This project is opened under the [GNU AGPLv3](https://github.com/go-phie/gophie/blob/master/LICENSE) which allows very broad use for both academic and commercial purposes.
 
 
 ## Credits

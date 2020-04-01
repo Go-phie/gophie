@@ -33,13 +33,12 @@ const DEFAULT_PLAYER = "browser"
 var streamCmd = &cobra.Command{
 	Use:   "stream",
 	Short: "Stream a video from gophie",
-	Long: `Sometimes you do not want to download. Gophie stream allows streaming videos using browser player.
-	You can pass a query argument to the stream call to search for a specific query or left blank to retrieve
-	latest uploaded movies on the specified engine. Full list of supported players can be found at https://github.com/bisoncorps/mplayer.
-
-	example:
-		gophie stream Jumanji - stream Jumanji
-		gophie stream -e fzmovies - check for latest movies on fzmovies for streaming
+	Long: `Stream a video from Gophie
+	
+Gophie stream allows streaming videos using browser player. You can pass a query argument to the stream call to search for a specific query or left blank to retrieve latest uploaded movies on the specified engine. Full list of supported players can be found at https://github.com/bisoncorps/mplayer.  
+example:
+  gophie stream Jumanji --player vlc (stream Jumanji using VLC Media Player)
+  gophie stream -e fzmovies (check for latest movies on fzmovies for streaming)
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
@@ -65,6 +64,6 @@ var streamCmd = &cobra.Command{
 
 func init() {
 	streamCmd.Flags().StringVarP(
-		&selectedPlayer, "player", "p", DEFAULT_PLAYER, "Player to use for streaming (default: browser)")
+		&selectedPlayer, "player", "p", DEFAULT_PLAYER, "Player to use for streaming")
 	rootCmd.AddCommand(streamCmd)
 }
