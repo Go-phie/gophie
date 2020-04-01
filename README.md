@@ -7,9 +7,6 @@
   <a href="https://goreportcard.com/report/github.com/bisoncorps/gophie">
     <img src="https://goreportcard.com/badge/github.com/bisoncorps/gophie" alt="Go Report Card">
   </a>
-  <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
-  </a>
   <a href="https://travis-ci.com/bisoncorps/gophie">
     <img src="https://travis-ci.com/bisoncorps/gophie.svg?branch=master" alt="Build Status">
   </a>
@@ -36,6 +33,7 @@ gophie
 
 ![Demo](assets/demo.gif)
 ```bash
+>>> gophie
 Gophie
 
 Usage:
@@ -48,6 +46,7 @@ Available Commands:
   list        lists the recent movies by page number
   resume      resume downloads for previously stopped movies
   search      search for a movie
+  stream      Stream a video from gophie
   version     Get Gophie Version
 
 Flags:

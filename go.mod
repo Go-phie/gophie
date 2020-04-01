@@ -7,6 +7,7 @@ require (
 	github.com/antchfx/htmlquery v1.2.2 // indirect
 	github.com/antchfx/xmlquery v1.2.3 // indirect
 	github.com/antchfx/xpath v1.1.4 // indirect
+	github.com/bisoncorps/mplayer v0.0.0-20200330192254-e2f647162350
 	github.com/briandowns/spinner v1.9.0
 	github.com/cheggaaa/pb/v3 v3.0.4
 	github.com/fatih/color v1.9.0 // indirect
@@ -16,7 +17,7 @@ require (
 	github.com/iawia002/annie v0.0.0-20200217104547-c4b096ad402a
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/sirupsen/logrus v1.2.0
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.2
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
