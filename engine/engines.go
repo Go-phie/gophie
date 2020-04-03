@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	//  "github.com/gocolly/colly/v2/debug"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,7 +34,7 @@ type Engine interface {
 	List(page int) SearchResult
 	String() string
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
-	parseSingleMovie(el *colly.HTMLElement, index int) (Movie, error)
+	parseSingleMovie(el *colly.HTMLElement) (Movie, error)
 
 	// getParseAttrs : get the attributes to use to parse a returned soup
 	// the first return string is the part of the html to be parsed e.g `body`, `main`
@@ -42,7 +43,7 @@ type Engine interface {
 	getParseAttrs() (string, string, error)
 
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
-	updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie)
+	updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie)
 }
 
 // Scrape : Parse queries a url and return results
@@ -51,15 +52,16 @@ func Scrape(engine Engine) ([]Movie, error) {
 		// Cache responses to prevent multiple download of pages
 		// even if the collector is restarted
 		colly.CacheDir("./gophie_cache"),
+		colly.Async(true),
+		//    colly.Debugger(&debug.LogDebugger{}),
 	)
 	// Another collector for download Links
 	downloadLinkCollector := c.Clone()
 
-	movieIndex := 0
-	var movies []Movie
+	var movies = make(map[string]*Movie)
 
 	// Any Extras setup for downloads using can be specified in the function
-	engine.updateDownloadProps(downloadLinkCollector, &movies)
+	engine.updateDownloadProps(downloadLinkCollector, movies)
 
 	main, article, err := engine.getParseAttrs()
 	if err != nil {
@@ -67,13 +69,13 @@ func Scrape(engine Engine) ([]Movie, error) {
 	}
 	c.OnHTML(main, func(e *colly.HTMLElement) {
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
-			movie, err := engine.parseSingleMovie(el, movieIndex)
+			movie, err := engine.parseSingleMovie(el)
 			if err != nil {
 				log.Errorf("%v could not be parsed", movie)
 			} else {
-				movies = append(movies, movie)
+				// Using DownloadLink as key to movie makes it unique
+				movies[movie.DownloadLink.String()] = &movie
 				downloadLinkCollector.Visit(movie.DownloadLink.String())
-				movieIndex++
 			}
 		})
 	})
@@ -92,11 +94,8 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// movie details when we need it
 	downloadLinkCollector.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml")
-		for i, movie := range movies {
-			if movie.DownloadLink.String() == r.URL.String() {
-				log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
-				r.Ctx.Put("movieIndex", strconv.Itoa(i))
-			}
+		if movie, ok := movies[r.URL.String()]; ok {
+			log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
 		}
 	})
 
@@ -110,11 +109,24 @@ func Scrape(engine Engine) ([]Movie, error) {
 	})
 
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
-		movie := &movies[getMovieIndexFromCtx(r.Request)]
-		log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
+		//    movie := movies[r.Request.URL.String()]
+		//    log.Infof("%s %v %s", r.Request.URL.String(), movie.DownloadLink, movie.Title)
+		//    log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
 	})
+
 	c.Visit(engine.getParseURL().String())
-	return movies, nil
+	c.Wait()
+	downloadLinkCollector.Wait()
+
+	// Create a List of Movies
+	v := make([]Movie, 0, len(movies))
+
+	for _, value := range movies {
+		v = append(v, *value)
+	}
+	prettyPrint(v)
+
+	return v, nil
 }
 
 // Movie : the structure of all downloadable movies
@@ -220,4 +232,24 @@ func getMovieIndexFromCtx(r *colly.Request) int {
 		log.Fatal(err)
 	}
 	return movieIndex
+}
+
+// Get Movie from a URL
+func getMovieFromMovies(url string, movies map[string]*Movie) *Movie {
+	if _, ok := movies[url]; ok {
+		return movies[url]
+	}
+	for _, movie := range movies {
+		if (*movie).DownloadLink.String() == url {
+			return movie
+		}
+	}
+	return &Movie{}
+}
+
+func prettyPrint(s []Movie) {
+	b, err := json.MarshalIndent(s, "", "  ")
+	if err == nil {
+		fmt.Println(string(b))
+	}
 }
