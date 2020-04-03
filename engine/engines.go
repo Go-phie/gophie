@@ -52,11 +52,14 @@ func Scrape(engine Engine) ([]Movie, error) {
 		// Cache responses to prevent multiple download of pages
 		// even if the collector is restarted
 		colly.CacheDir("./gophie_cache"),
-		colly.Async(true),
+		// colly.Async(true),
 		//    colly.Debugger(&debug.LogDebugger{}),
 	)
 	// Another collector for download Links
-	downloadLinkCollector := c.Clone()
+	downloadLinkCollector := colly.NewCollector(
+		colly.CacheDir("./gophie-cache"),
+		colly.Async(true)
+	)
 
 	var movies = make(map[string]*Movie)
 
@@ -75,9 +78,13 @@ func Scrape(engine Engine) ([]Movie, error) {
 			} else {
 				// Using DownloadLink as key to movie makes it unique
 				movies[movie.DownloadLink.String()] = &movie
-				downloadLinkCollector.Visit(movie.DownloadLink.String())
+				// downloadLinkCollector.Visit(movie.DownloadLink.String())
 			}
 		})
+
+		for _, movie := range movies{
+			downloadLinkCollector.Visit(movie.DownloadLink.String())
+		}
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -109,6 +116,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 	})
 
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
+		log.Debug(r.Request.URL.String)
 		//    movie := movies[r.Request.URL.String()]
 		//    log.Infof("%s %v %s", r.Request.URL.String(), movie.DownloadLink, movie.Title)
 		//    log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
