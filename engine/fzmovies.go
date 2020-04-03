@@ -103,9 +103,9 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 	})
 
 	// Update Download Link if "Download" HTML on page
-	downloadCollector.OnHTML("p", func(e *colly.HTMLElement) {
-		if strings.HasSuffix(strings.TrimSpace(e.ChildAttr("input", "value")), "mp4") {
-			downloadLink, err := url.Parse(e.Request.AbsoluteURL(e.ChildAttr("input", "value")))
+	downloadCollector.OnHTML("input[name=download1]", func(e *colly.HTMLElement) {
+		if strings.HasSuffix(strings.TrimSpace(e.Attr("value")), "mp4") {
+			downloadLink, err := url.Parse(e.Request.AbsoluteURL(e.Attr("value")))
 			if err != nil {
 				log.Fatal(err)
 			}
