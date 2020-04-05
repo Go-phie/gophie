@@ -23,10 +23,14 @@ func ProcessFetchTask(fn fetchFunc) engine.SearchResult {
 		s.Suffix = " Fetching Data..."
 		s.Writer = os.Stderr
 		s.Start()
-		defer s.Stop()
 		result = fn()
+		s.Stop()
 	} else {
 		result = fn()
+	}
+	if len(result.Movies) <= 0 {
+		log.Info("No Results Found")
+		os.Exit(0)
 	}
 	return result
 }
