@@ -58,8 +58,9 @@ func (engine *FzEngine) getParseAttrs() (string, string, error) {
 	return "body", "div.mainbox", nil
 }
 
-func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement) (Movie, error) {
+func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement, movieIndex int) (Movie, error) {
 	movie := Movie{
+		Index:    movieIndex,
 		IsSeries: false,
 		Source:   engine.Name,
 	}
@@ -92,7 +93,7 @@ func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement) (Movie, error) {
 func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie) {
 	// Update movie download link if ul.downloadlinks on page
 	downloadCollector.OnHTML("ul.moviesfiles", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		link := strings.Replace(e.ChildAttr("a", "href"), "download1.php", "download.php", 1)
 		downloadLink, err := url.Parse(e.Request.AbsoluteURL(link + "&pt=jRGarGzOo2"))
 		//    downloadLink, err := url.Parse(e.ChildAttr("a", "href") + "&pt=jRGarGzOo2")
@@ -113,7 +114,7 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 			if err != nil {
 				log.Fatal(err)
 			}
-			movie := getMovieFromMovies(e.Request.URL.String(), movies)
+			movie := getMovieFromMovies(e.Request, movies)
 			movie.DownloadLink = downloadLink
 		}
 	})

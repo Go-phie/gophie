@@ -57,8 +57,9 @@ func (engine *BestHDEngine) getParseAttrs() (string, string, error) {
 	return "body", "article.latestPost", nil
 }
 
-func (engine *BestHDEngine) parseSingleMovie(el *colly.HTMLElement) (Movie, error) {
+func (engine *BestHDEngine) parseSingleMovie(el *colly.HTMLElement, movieIndex int) (Movie, error) {
 	movie := Movie{
+		Index:    movieIndex,
 		IsSeries: false,
 		Source:   engine.Name,
 	}
@@ -92,7 +93,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	submissionDetails := make(map[string]string)
 	// Update movie download link if div.post-single-content  on page
 	downloadCollector.OnHTML("div.post-single-content", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		ptags := e.ChildTexts("p")
 		if ptags[len(ptags)-3] >= ptags[len(ptags)-2] {
 			movie.Description = strings.TrimSpace(ptags[len(ptags)-3])
@@ -119,7 +120,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	})
 
 	downloadCollector.OnHTML("div.content-area", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		links := e.ChildAttrs("a", "href")
 		for _, link := range links {
 			if strings.HasPrefix(link, "https://zeefiles") || strings.HasPrefix(link, "http://zeefiles") {
@@ -139,7 +140,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	})
 
 	downloadCollector.OnHTML("div.freeDownload", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		zeesubmission := make(map[string]string)
 		if e.ChildAttr("a.link_button", "href") != "" {
 			downloadlink, err := url.Parse(e.ChildAttr("a.link_button", "href"))
@@ -164,7 +165,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 
 	downloadCollector.OnHTML("form[method=post]", func(e *colly.HTMLElement) {
 		var err error
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		downloadlink := movie.DownloadLink
 		inputNames := e.ChildAttrs("input", "name")
 		inputValues := e.ChildAttrs("input", "value")
@@ -174,8 +175,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 		}
 		requestlink := e.Request.URL.String()
 		if !(strings.HasPrefix(requestlink, "https://zeefiles") || strings.HasPrefix(requestlink, "http://zeefiles")) {
-			// TODO Dynamically assign movieIndex
-			downloadlink, err = url.Parse("https://udown.me/watchonline/?movieIndex=1")
+			downloadlink, err = url.Parse("https://udown.me/watchonline/?movieIndex=" + strconv.Itoa(movie.Index))
 			if err == nil {
 				movie.DownloadLink = downloadlink
 			}
@@ -188,7 +188,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 
 	downloadCollector.OnHTML("video", func(e *colly.HTMLElement) {
 		downloadlink := e.ChildAttr("source", "src")
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		movie.DownloadLink, _ = url.Parse(downloadlink)
 	})
 }

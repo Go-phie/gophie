@@ -34,7 +34,7 @@ type Engine interface {
 	List(page int) SearchResult
 	String() string
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
-	parseSingleMovie(el *colly.HTMLElement) (Movie, error)
+	parseSingleMovie(el *colly.HTMLElement, movieIndex int) (Movie, error)
 
 	// getParseAttrs : get the attributes to use to parse a returned soup
 	// the first return string is the part of the html to be parsed e.g `body`, `main`
@@ -52,14 +52,11 @@ func Scrape(engine Engine) ([]Movie, error) {
 		// Cache responses to prevent multiple download of pages
 		// even if the collector is restarted
 		colly.CacheDir("./gophie_cache"),
-		// colly.Async(true),
+		colly.Async(true),
 		//    colly.Debugger(&debug.LogDebugger{}),
 	)
 	// Another collector for download Links
-	downloadLinkCollector := colly.NewCollector(
-		colly.CacheDir("./gophie-cache"),
-		colly.Async(true)
-	)
+	downloadLinkCollector := c.Clone()
 
 	var movies = make(map[string]*Movie)
 
@@ -70,21 +67,22 @@ func Scrape(engine Engine) ([]Movie, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	movieIndex := 0
 	c.OnHTML(main, func(e *colly.HTMLElement) {
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
-			movie, err := engine.parseSingleMovie(el)
+			movie, err := engine.parseSingleMovie(el, movieIndex)
 			if err != nil {
 				log.Errorf("%v could not be parsed", movie)
 			} else {
 				// Using DownloadLink as key to movie makes it unique
-				movies[movie.DownloadLink.String()] = &movie
-				// downloadLinkCollector.Visit(movie.DownloadLink.String())
+				m := strconv.Itoa(movieIndex)
+				movies[m] = &movie
+				ctx := colly.NewContext()
+				ctx.Put("movieIndex", m)
+				downloadLinkCollector.Request("GET", movie.DownloadLink.String(), nil, ctx, nil)
+				movieIndex++
 			}
 		})
-
-		for _, movie := range movies{
-			downloadLinkCollector.Visit(movie.DownloadLink.String())
-		}
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -101,25 +99,25 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// movie details when we need it
 	downloadLinkCollector.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml")
-		if movie, ok := movies[r.URL.String()]; ok {
-			log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
-		}
+		movie := getMovieFromMovies(r, movies)
+		log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
 	})
 
 	// If Response Content Type is not Text, Abort the Request to prevent fully downloading the
 	// body in case of other types like mp4
 	downloadLinkCollector.OnResponseHeaders(func(r *colly.Response) {
+		log.Infof("%s", r.Headers)
 		if !strings.Contains(r.Headers.Get("Content-Type"), "text") {
+			log.Errorf("Response %s is not text/html. Aborting request", r.Request.URL)
 			r.Request.Abort()
-			log.Debugf("Response %s is not text/html. Aborting request", r.Request.URL)
 		}
 	})
 
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
-		log.Debug(r.Request.URL.String)
-		//    movie := movies[r.Request.URL.String()]
-		//    log.Infof("%s %v %s", r.Request.URL.String(), movie.DownloadLink, movie.Title)
-		//    log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
+		movie := getMovieFromMovies(r.Request, movies)
+		log.Infof("Movie on Response %v", movie)
+		//    prettyPrint([]Movie{*movie})
+		//    log.Debugf("Retrieved Download Page %s\n", movie.DownloadLink.String())
 	})
 
 	c.Visit(engine.getParseURL().String())
@@ -242,15 +240,11 @@ func getMovieIndexFromCtx(r *colly.Request) int {
 	return movieIndex
 }
 
-// Get Movie from a URL
-func getMovieFromMovies(url string, movies map[string]*Movie) *Movie {
-	if _, ok := movies[url]; ok {
-		return movies[url]
-	}
-	for _, movie := range movies {
-		if (*movie).DownloadLink.String() == url {
-			return movie
-		}
+// Get Movie from a Context
+func getMovieFromMovies(r *colly.Request, movies map[string]*Movie) *Movie {
+	movieIndex := r.Ctx.Get("movieIndex")
+	if _, ok := movies[movieIndex]; ok {
+		return movies[movieIndex]
 	}
 	return &Movie{}
 }

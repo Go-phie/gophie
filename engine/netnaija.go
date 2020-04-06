@@ -69,7 +69,7 @@ func (engine *NetNaijaEngine) getParseAttrs() (string, string, error) {
 	return "main", article, nil
 }
 
-func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement) (Movie, error) {
+func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, movieIndex int) (Movie, error) {
 	// movie title identifier
 	var title string
 	if title = "h3.file-name"; engine.mode == SearchMode {
@@ -78,6 +78,7 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement) (Movie, er
 
 	re := regexp.MustCompile(`\((.*)\)`)
 	movie := Movie{
+		Index:    movieIndex,
 		IsSeries: false,
 		Source:   engine.Name,
 	}
@@ -117,7 +118,7 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement) (Movie, er
 func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie) {
 	// Update movie size
 	downloadCollector.OnHTML("button[id=download-button]", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		movie.Size = strings.TrimSpace(e.ChildText("span.size"))
 	})
 
@@ -126,20 +127,21 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 		if err != nil {
 			log.Fatal(err)
 		}
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		movie.DownloadLink = downloadLink
 		downloadCollector.Visit(downloadLink.String())
 	})
 
 	// Update movie download link if a[id=download] on page
 	downloadCollector.OnHTML("a[id=download]", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request.URL.String(), movies)
+		movie := getMovieFromMovies(e.Request, movies)
 		movie.Size = strings.TrimSpace(e.ChildText("span[id=download-size]"))
 		downloadLink, err := url.Parse(e.Attr("href"))
 		if err != nil {
 			log.Fatal(err)
 		}
 		movie.DownloadLink = downloadLink
+		log.Infof("Parsing Downloads from %s %s %s", e.Request.URL.String(), movie.Title, downloadLink.String())
 	})
 
 	// Update Download Link if "Direct Download" HTML on page
@@ -149,14 +151,15 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			if err != nil {
 				log.Fatal(err)
 			}
-			movie := getMovieFromMovies(e.Request.URL.String(), movies)
+			movie := getMovieFromMovies(e.Request, movies)
+			log.Infof("Parsing Downloads %s %s", movie.Title, downloadLink.String())
 			movie.DownloadLink = downloadLink
 		}
 	})
 
 	//for series or parts
 	downloadCollector.OnHTML("div.video-series-latest-episodes", func(inn *colly.HTMLElement) {
-		movie := getMovieFromMovies(inn.Request.URL.String(), movies)
+		movie := getMovieFromMovies(inn.Request, movies)
 		movie.IsSeries = true
 		inn.ForEach("a", func(_ int, e *colly.HTMLElement) {
 			downloadLink, err := url.Parse(e.Attr("href"))
