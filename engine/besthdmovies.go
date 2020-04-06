@@ -89,11 +89,13 @@ func (engine *BestHDEngine) parseSingleMovie(el *colly.HTMLElement, movieIndex i
 	return movie, nil
 }
 
-func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie) {
+func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collector, scrapedMovies *scraped) {
 	submissionDetails := make(map[string]string)
 	// Update movie download link if div.post-single-content  on page
 	downloadCollector.OnHTML("div.post-single-content", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		ptags := e.ChildTexts("p")
 		if ptags[len(ptags)-3] >= ptags[len(ptags)-2] {
 			movie.Description = strings.TrimSpace(ptags[len(ptags)-3])
@@ -120,7 +122,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	})
 
 	downloadCollector.OnHTML("div.content-area", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
 		links := e.ChildAttrs("a", "href")
 		for _, link := range links {
 			if strings.HasPrefix(link, "https://zeefiles") || strings.HasPrefix(link, "http://zeefiles") {
@@ -130,6 +132,8 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 				}
 				downloadlink, err := url.Parse(link)
 				if err == nil {
+					scrapedMovies.Lock()
+					defer scrapedMovies.Unlock()
 					movie.DownloadLink = downloadlink
 					downloadCollector.Visit(downloadlink.String())
 				} else {
@@ -140,11 +144,13 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	})
 
 	downloadCollector.OnHTML("div.freeDownload", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
 		zeesubmission := make(map[string]string)
 		if e.ChildAttr("a.link_button", "href") != "" {
 			downloadlink, err := url.Parse(e.ChildAttr("a.link_button", "href"))
 			if err == nil {
+				scrapedMovies.Lock()
+				defer scrapedMovies.Unlock()
 				movie.DownloadLink = downloadlink
 			}
 		} else {
@@ -156,7 +162,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 				zeesubmission[inputNames[index]] = inputValues[index]
 			}
 
-			err := downloadCollector.Post((*movie).DownloadLink.String(), zeesubmission)
+			err := downloadCollector.Post(movie.DownloadLink.String(), zeesubmission)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -165,7 +171,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 
 	downloadCollector.OnHTML("form[method=post]", func(e *colly.HTMLElement) {
 		var err error
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
 		downloadlink := movie.DownloadLink
 		inputNames := e.ChildAttrs("input", "name")
 		inputValues := e.ChildAttrs("input", "value")
@@ -188,7 +194,9 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 
 	downloadCollector.OnHTML("video", func(e *colly.HTMLElement) {
 		downloadlink := e.ChildAttr("source", "src")
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		movie.DownloadLink, _ = url.Parse(downloadlink)
 	})
 }

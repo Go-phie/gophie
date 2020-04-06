@@ -90,16 +90,19 @@ func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement, movieIndex int) 
 	return movie, nil
 }
 
-func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie) {
+func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, scrapedMovies *scraped) {
 	// Update movie download link if ul.downloadlinks on page
 	downloadCollector.OnHTML("ul.moviesfiles", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
 		link := strings.Replace(e.ChildAttr("a", "href"), "download1.php", "download.php", 1)
 		downloadLink, err := url.Parse(e.Request.AbsoluteURL(link + "&pt=jRGarGzOo2"))
 		//    downloadLink, err := url.Parse(e.ChildAttr("a", "href") + "&pt=jRGarGzOo2")
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		movie.DownloadLink = downloadLink
 		re := regexp.MustCompile(`(.* MB)`)
 		dl := strings.TrimPrefix(re.FindStringSubmatch(e.ChildText("dcounter"))[0], "(")
@@ -114,7 +117,9 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 			if err != nil {
 				log.Fatal(err)
 			}
-			movie := getMovieFromMovies(e.Request, movies)
+			movie := getMovieFromMovies(e.Request, scrapedMovies)
+			scrapedMovies.Lock()
+			defer scrapedMovies.Unlock()
 			movie.DownloadLink = downloadLink
 		}
 	})

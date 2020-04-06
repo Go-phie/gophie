@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gocolly/colly/v2"
 	//  "github.com/gocolly/colly/v2/debug"
@@ -43,7 +44,14 @@ type Engine interface {
 	getParseAttrs() (string, string, error)
 
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
-	updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie)
+	updateDownloadProps(downloadCollector *colly.Collector, scrapedMovies *scraped)
+}
+
+// All scraped movies are stored here. Since accessed on different goroutine
+// Mutex to prevent Data Race
+type scraped struct {
+	movies map[string]*Movie
+	sync.Mutex
 }
 
 // Scrape : Parse queries a url and return results
@@ -58,10 +66,10 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// Another collector for download Links
 	downloadLinkCollector := c.Clone()
 
-	var movies = make(map[string]*Movie)
+	scrapedMovies := scraped{movies: make(map[string]*Movie)}
 
 	// Any Extras setup for downloads using can be specified in the function
-	engine.updateDownloadProps(downloadLinkCollector, movies)
+	engine.updateDownloadProps(downloadLinkCollector, &scrapedMovies)
 
 	main, article, err := engine.getParseAttrs()
 	if err != nil {
@@ -75,8 +83,10 @@ func Scrape(engine Engine) ([]Movie, error) {
 				log.Errorf("%v could not be parsed", movie)
 			} else {
 				// Using DownloadLink as key to movie makes it unique
+				scrapedMovies.Lock()
+				defer scrapedMovies.Unlock()
 				m := strconv.Itoa(movieIndex)
-				movies[m] = &movie
+				scrapedMovies.movies[m] = &movie
 				ctx := colly.NewContext()
 				ctx.Put("movieIndex", m)
 				downloadLinkCollector.Request("GET", movie.DownloadLink.String(), nil, ctx, nil)
@@ -99,25 +109,22 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// movie details when we need it
 	downloadLinkCollector.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml")
-		movie := getMovieFromMovies(r, movies)
-		log.Debugf("Retrieving Download Link %v\n", movie.DownloadLink)
+		movie := getMovieFromMovies(r, &scrapedMovies)
+		log.Debugf("Retrieving Download Link %s\n", movie.Title)
 	})
 
 	// If Response Content Type is not Text, Abort the Request to prevent fully downloading the
 	// body in case of other types like mp4
 	downloadLinkCollector.OnResponseHeaders(func(r *colly.Response) {
-		log.Infof("%s", r.Headers)
 		if !strings.Contains(r.Headers.Get("Content-Type"), "text") {
-			log.Errorf("Response %s is not text/html. Aborting request", r.Request.URL)
+			log.Debugf("Response %s is not text/html. Aborting request", r.Request.URL)
 			r.Request.Abort()
 		}
 	})
 
 	downloadLinkCollector.OnResponse(func(r *colly.Response) {
-		movie := getMovieFromMovies(r.Request, movies)
-		log.Infof("Movie on Response %v", movie)
-		//    prettyPrint([]Movie{*movie})
-		//    log.Debugf("Retrieved Download Page %s\n", movie.DownloadLink.String())
+		movie := getMovieFromMovies(r.Request, &scrapedMovies)
+		log.Debugf("Retrieved Download Page %s\n", movie.Title)
 	})
 
 	c.Visit(engine.getParseURL().String())
@@ -125,9 +132,9 @@ func Scrape(engine Engine) ([]Movie, error) {
 	downloadLinkCollector.Wait()
 
 	// Create a List of Movies
-	v := make([]Movie, 0, len(movies))
+	v := make([]Movie, 0, len(scrapedMovies.movies))
 
-	for _, value := range movies {
+	for _, value := range scrapedMovies.movies {
 		v = append(v, *value)
 	}
 	prettyPrint(v)
@@ -241,10 +248,12 @@ func getMovieIndexFromCtx(r *colly.Request) int {
 }
 
 // Get Movie from a Context
-func getMovieFromMovies(r *colly.Request, movies map[string]*Movie) *Movie {
+func getMovieFromMovies(r *colly.Request, scrapedMovies *scraped) *Movie {
 	movieIndex := r.Ctx.Get("movieIndex")
-	if _, ok := movies[movieIndex]; ok {
-		return movies[movieIndex]
+	scrapedMovies.Lock()
+	defer scrapedMovies.Unlock()
+	if _, ok := scrapedMovies.movies[movieIndex]; ok {
+		return scrapedMovies.movies[movieIndex]
 	}
 	return &Movie{}
 }

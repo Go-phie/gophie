@@ -115,10 +115,12 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, movieIndex
 	return movie, nil
 }
 
-func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Collector, movies map[string]*Movie) {
+func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Collector, scrapedMovies *scraped) {
 	// Update movie size
 	downloadCollector.OnHTML("button[id=download-button]", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		movie.Size = strings.TrimSpace(e.ChildText("span.size"))
 	})
 
@@ -127,14 +129,18 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 		if err != nil {
 			log.Fatal(err)
 		}
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		movie.DownloadLink = downloadLink
 		downloadCollector.Visit(downloadLink.String())
 	})
 
 	// Update movie download link if a[id=download] on page
 	downloadCollector.OnHTML("a[id=download]", func(e *colly.HTMLElement) {
-		movie := getMovieFromMovies(e.Request, movies)
+		movie := getMovieFromMovies(e.Request, scrapedMovies)
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		movie.Size = strings.TrimSpace(e.ChildText("span[id=download-size]"))
 		downloadLink, err := url.Parse(e.Attr("href"))
 		if err != nil {
@@ -151,15 +157,19 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			if err != nil {
 				log.Fatal(err)
 			}
-			movie := getMovieFromMovies(e.Request, movies)
+			movie := getMovieFromMovies(e.Request, scrapedMovies)
 			log.Infof("Parsing Downloads %s %s", movie.Title, downloadLink.String())
+			scrapedMovies.Lock()
+			defer scrapedMovies.Unlock()
 			movie.DownloadLink = downloadLink
 		}
 	})
 
 	//for series or parts
 	downloadCollector.OnHTML("div.video-series-latest-episodes", func(inn *colly.HTMLElement) {
-		movie := getMovieFromMovies(inn.Request, movies)
+		movie := getMovieFromMovies(inn.Request, scrapedMovies)
+		scrapedMovies.Lock()
+		defer scrapedMovies.Unlock()
 		movie.IsSeries = true
 		inn.ForEach("a", func(_ int, e *colly.HTMLElement) {
 			downloadLink, err := url.Parse(e.Attr("href"))
