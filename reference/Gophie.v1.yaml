@@ -23,9 +23,15 @@ info:
 
     Scraping is a tricky job. Not all scrapers are perfectly implemented to catch edge cases and occassionally some download links provided may not be the final links. That being said, the supported engines are
 
+    ### Movies
+
     - [NetNaija](https://www.thenetnaija.com)
     - [FzMovies](https://www.fzmovies.net)
     - [BestHDMovies](https://besthdmovies.top)
+
+    ### Series
+
+    - [TvSeries](https://tvseries.in)
 servers:
   - url: 'https://gophie.herokuapp.com'
     description: Heroku server
@@ -259,6 +265,12 @@ paths:
                       BaseURL: 'https://www.thenetnaija.com/'
                       SearchURL: 'https://www.thenetnaija.com/search'
                       ListURL: 'https://www.thenetnaija.com/videos/movies/'
+                    tvseries:
+                      Name: TvSeries
+                      Description: TvSeries is a site owned by the fzmovies group where shows are available
+                      BaseURL: 'https://tvseries.in/'
+                      SearchURL: 'https://tvseries.in/search.php'
+                      ListURL: 'https://tvseries.in/tv.php'
       operationId: get-engine
       description: Returns the engine descriptions on gophie
       parameters:
@@ -321,6 +333,11 @@ paths:
           name: query
           description: query to search for
           required: true
+        - schema:
+            type: string
+          in: query
+          name: page
+          description: 'pagination for search result, useful especially for series'
 components:
   schemas:
     Movie:

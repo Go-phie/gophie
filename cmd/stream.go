@@ -50,7 +50,7 @@ example:
 		if query == "" {
 			movie = processList(1, selectedEngine)
 		} else {
-			movie = processSearch(query, selectedEngine)
+			movie = processSearch(selectedEngine, query, "1")
 		}
 		p, err := mplayer.GetPlayer(selectedPlayer)
 		if err != nil {

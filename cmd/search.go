@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"strings"
+	"strconv"
 
 	"github.com/bisoncorps/gophie/downloader"
 	"github.com/bisoncorps/gophie/engine"
@@ -37,29 +38,68 @@ var searchCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Engine is set from root.go
-		selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
-		if err != nil {
-			log.Fatal(err)
-		}
+		page := strconv.Itoa(pageNum)
 		query := strings.Join(args, " ")
-		selectedMovie := processSearch(query, selectedEngine)
-		log.Debugf("Movie: %v\n", selectedMovie)
-		// Start Movie Download
-		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
-			log.Fatal(err)
+		selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
+		// only run pagination for 
+		if strings.ToLower(viper.GetString("engine")) == "tvseries" {
+			searchPager(query, page)
+		} else {
+			selectedMovie := processSearch(selectedEngine, query)
+			log.Debugf("Movie: %v\n", selectedMovie)
+			// Start Movie Download
+			if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
+				log.Fatal(err)
+			}
 		}
 	},
 }
 
 func init() {
+	searchCmd.Flags().IntVarP(&pageNum, "page", "p", 1, "Page Number to search and return from")
 	rootCmd.AddCommand(searchCmd)
 }
 
-func processSearch(query string, e engine.Engine) engine.Movie {
-	// Initialize process and show loader on terminal and store result in result
-	result := ProcessFetchTask(func() engine.SearchResult { return e.Search(query) })
-	_, choice := SelectOpts(result.Query, result.Titles())
+func searchPager(param ...string) {
+	selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	selectedMovie := processSearch(selectedEngine, param...)
+	log.Debugf("Movie: %v\n", selectedMovie)
+	// Start Movie Download
+	if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
+		log.Fatal(err)
+	}
+}
 
+func processSearch(e engine.Engine, param ...string) engine.Movie {
+	// Initialize process and show loader on terminal and store result in result
+	var choice string
+	var choiceIndex int
+	var result engine.SearchResult
+	query := param[0]
+	if len(param)> 1 {
+		pageNum, _ = strconv.Atoi(param[1])
+		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(param...) })
+		var items []string
+		items = append(result.Titles(), []string{">>> Next Page"}...)
+		if pageNum != 1 {
+			items = append([]string{"<<< Previous Page"}, items...)
+		}
+		choiceIndex, choice = SelectOpts(result.Query, items)
+	
+		if choiceIndex != len(items)-1 {
+			if choiceIndex == 0 && pageNum != 1 {
+				searchPager(query, strconv.Itoa(pageNum -1))
+			}
+		} else {
+			searchPager(query, strconv.Itoa(pageNum +1))
+		}
+	} else {
+		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(query) })
+		_, choice = SelectOpts(result.Query, result.Titles())
+	}
 	selectedMovie, err := result.GetMovieByTitle(choice)
 	if err != nil {
 		log.Fatal(err)

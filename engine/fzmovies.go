@@ -133,8 +133,9 @@ func (engine *FzEngine) List(page int) SearchResult {
 	return result
 }
 
-// Search : Searches netnaija for a particular query and return an array of movies
-func (engine *FzEngine) Search(query string) SearchResult {
+// Search : Searches fzmovies for a particular query and return an array of movies
+func (engine *FzEngine) Search(param ...string) SearchResult {
+	query := param[0]
 	engine.mode = SearchMode
 	result := SearchResult{
 		Query: query,

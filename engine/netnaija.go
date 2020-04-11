@@ -184,7 +184,8 @@ func (engine *NetNaijaEngine) List(page int) SearchResult {
 }
 
 // Search : Searches netnaija for a particular query and return an array of movies
-func (engine *NetNaijaEngine) Search(query string) SearchResult {
+func (engine *NetNaijaEngine) Search(param ...string) SearchResult {
+	query := param[0]
 	engine.mode = SearchMode
 	result := SearchResult{
 		Query: query,

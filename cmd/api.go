@@ -98,6 +98,16 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Query param must be added to url", http.StatusBadRequest)
 	}
 
+	page := r.URL.Query().Get("page")
+	if page == "" {
+		page = "1"
+	}
+
+	pageNum, eRR := strconv.Atoi(page)
+	if eRR != nil {
+		http.Error(w, "Page must be a number", http.StatusBadRequest)
+	}
+
 	eng := r.URL.Query().Get("engine")
 	site, err := engine.GetEngine(eng)
 	if err != nil {
@@ -105,7 +115,8 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debug("Using Engine ", site)
 	log.Debug("Searching for ", query)
-	result = site.Search(query)
+	log.Debug("Returning search for page")
+	result = site.Search(query, strconv.Itoa(pageNum))
 
 	// dump results
 	b, err := json.Marshal(result.Movies)

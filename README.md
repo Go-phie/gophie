@@ -19,9 +19,16 @@ Search, stream and download movies without having to bump into ads. Feel free to
 ## What is Gophie
 
 Gophie is a tool to help you search, stream and download movies from movie sites without going through all the stress of by-passing ads. Currently, the following sites are supported:
+
+### Movies
+
 - NetNaija
 - FzMovies
 - BestHD
+
+### Series
+
+- TvSeries
 
 More Sites and more variations (such as animes and series) will come in to play quite soon.
 

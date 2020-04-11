@@ -29,7 +29,7 @@ func (m Mode) String() string {
 // Engine : interface for all engines
 type Engine interface {
 	getParseURL() *url.URL
-	Search(query string) SearchResult
+	Search(param ...string) SearchResult
 	List(page int) SearchResult
 	String() string
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
@@ -201,6 +201,7 @@ func GetEngines() map[string]Engine {
 	engines["netnaija"] = NewNetNaijaEngine()
 	engines["fzmovies"] = NewFzEngine()
 	engines["besthdmovies"] = NewBestHDEngine()
+	engines["tvseries"] = NewTvSeriesEngine()
 	return engines
 }
 

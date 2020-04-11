@@ -215,7 +215,8 @@ func (engine *BestHDEngine) List(page int) SearchResult {
 }
 
 // Search : Searches netnaija for a particular query and return an array of movies
-func (engine *BestHDEngine) Search(query string) SearchResult {
+func (engine *BestHDEngine) Search(param ...string) SearchResult {
+	query := param[0]
 	engine.mode = SearchMode
 	result := SearchResult{
 		Query: query,
