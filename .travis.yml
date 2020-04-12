@@ -25,12 +25,12 @@ matrix:
         - REPLACE="#!\/usr\/bin\/env\ node"
       script:
         - npm i -g @stoplight/cli
-        - sed -i "1s/.*/$REPLACE/" $(npm config get prefix)/lib/node_modules/@stoplight/cli/bin/stoplight.js
+        #- sed -i "1s/.*/$REPLACE/" $(npm config get prefix)/lib/node_modules/@stoplight/cli/bin/stoplight.js
       deploy:
         # deploy docs
         - provider: script
           skip_cleanup: true
-          script: $(npm config get prefix)/bin/stoplight publish -t $SPOTLIGHT_TOKEN --url https://stoplight.io/api
+          script: $(npm config get prefix)/bin/stoplight publish --token $STOPLIGHT_TOKEN --url https://stoplight.io/api
         
 
 notifications:
