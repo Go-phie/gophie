@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"strconv"
 	"strings"
@@ -110,6 +111,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 	downloadLinkCollector.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml")
 		movie := getMovieFromMovies(r, &scrapedMovies)
+		// r.Ctx.Put("movieIndex", strconv.Itoa(movie.Index))
 		log.Debugf("Retrieving Download Link %s\n", movie.Title)
 	})
 
@@ -263,4 +265,12 @@ func prettyPrint(s []Movie) {
 	if err == nil {
 		fmt.Println(string(b))
 	}
+}
+
+func createFormReader(data map[string]string) io.Reader {
+	form := url.Values{}
+	for k, v := range data {
+		form.Add(k, v)
+	}
+	return strings.NewReader(form.Encode())
 }
