@@ -30,7 +30,7 @@ matrix:
         # deploy docs
         - provider: script
           skip_cleanup: true
-          script: $(npm config get prefix)/bin/stoplight publish -t $SPOTLIGHT_TOKEN --url https://stoplight.io/api
+          script: $(npm config get prefix)/bin/stoplight publish --token $STOPLIGHT_TOKEN --url https://stoplight.io/api
         
 
 notifications:
