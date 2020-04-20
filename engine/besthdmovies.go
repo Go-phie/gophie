@@ -100,9 +100,12 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 		} else {
 			movie.Description = strings.TrimSpace(ptags[len(ptags)-2])
 		}
-		for _, content := range ptags {
+		for index, content := range ptags {
 			if strings.HasPrefix(content, "File Size: ") {
 				movie.Size = strings.TrimPrefix(content, "File Size: ")
+			}
+			if index == 7 {
+				movie.Description = content
 			}
 		}
 		links := e.ChildAttrs("a", "href")
