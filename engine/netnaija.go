@@ -127,7 +127,26 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			log.Fatal(err)
 		}
 		(*movies)[getMovieIndexFromCtx(e.Request)].DownloadLink = downloadLink
-		downloadCollector.Visit(downloadLink.String())
+		downloadCollector.Visit(e.ChildAttr("a", "href"))
+	})
+
+	downloadCollector.OnHTML("div.video-about", func(e *colly.HTMLElement) {
+		movieIndex := getMovieIndexFromCtx(e.Request)
+		movie := &((*movies)[movieIndex])
+		description := e.ChildText("p")
+		if description != "" {
+			movie.Description = description
+		}
+		if !(strings.HasSuffix(movie.DownloadLink.String(), "/download") || strings.HasSuffix(movie.DownloadLink.String(), "?d=1")) {
+			downloadLink, err := url.Parse(path.Join(movie.DownloadLink.String(), "download"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			movie.DownloadLink = downloadLink
+		}
+		if !strings.HasSuffix(movie.DownloadLink.String(), "?d=1") {
+			downloadCollector.Visit(movie.DownloadLink.String())
+		}
 	})
 
 	// Update movie download link if a[id=download] on page
@@ -143,12 +162,24 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 
 	// Update Download Link if "Direct Download" HTML on page
 	downloadCollector.OnHTML("div.row", func(e *colly.HTMLElement) {
+		var descLink string
+		movieIndex := getMovieIndexFromCtx(e.Request)
+		movie := &((*movies)[movieIndex])
 		if strings.TrimSpace(e.ChildText("label")) == "Direct Download" {
 			downloadLink, err := url.Parse(e.ChildAttr("input", "value"))
 			if err != nil {
 				log.Fatal(err)
 			}
-			(*movies)[getMovieIndexFromCtx(e.Request)].DownloadLink = downloadLink
+			if strings.HasSuffix(movie.DownloadLink.String(), "/download"){
+				descLink = strings.TrimSuffix(movie.DownloadLink.String(), "/download")
+			}
+			movie.DownloadLink = downloadLink
+			if movie.Description == "" {
+				ctx := colly.NewContext()
+				ctx.Put("movieIndex", strconv.Itoa(movieIndex))
+				downloadCollector.Request("GET", descLink, nil, ctx, nil)
+				// downloadCollector.Visit(descLink)
+			}
 		}
 	})
 
