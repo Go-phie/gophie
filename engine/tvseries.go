@@ -104,19 +104,35 @@ func (engine *TvSeriesEngine) updateDownloadProps(downloadCollector *colly.Colle
 		}
 	})
 
-	// Update movie download link if ul.downloadlinks on page
-	downloadCollector.OnHTML("a[id=dlink2]", func(e *colly.HTMLElement) {
-		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
-		link := e.Request.AbsoluteURL(e.Attr("href")) 	
-		downloadLink, err := url.Parse(link)
-		//    downloadLink, err := url.Parse(e.ChildAttr("a", "href") + "&pt=jRGarGzOo2")
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			movie.DownloadLink = downloadLink
-		}
-		downloadCollector.Visit(downloadLink.String())
-	})
+	// // Update movie download link if ul.downloadlinks on page
+	// downloadCollector.OnHTML("a[id=dlink2]", func(e *colly.HTMLElement) {
+	// 	movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
+	// 	link := e.Request.AbsoluteURL(e.Attr("href")) 	
+	// 	downloadLink, err := url.Parse(link)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	} else {
+	// 		movie.DownloadLink = downloadLink
+	// 	}
+	// 	downloadCollector.Visit(downloadLink.String())
+	// })
+
+	for _, iden := range [...]string{ "a[id=dlink3]",  "a[id=dlink4]", "a[id=dlink2]"} {
+		// Update movie download link if ul.downloadlinks on page
+		downloadCollector.OnHTML(iden, func(e *colly.HTMLElement) {
+			movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
+			link := e.Request.AbsoluteURL(e.Attr("href")) 	
+			downloadLink, err := url.Parse(link)
+			if err != nil {
+				log.Fatal(err)
+			} else {
+				movie.DownloadLink = downloadLink
+			}
+			if !(strings.HasSuffix(movie.DownloadLink.String(), "mp4") || strings.HasSuffix(movie.DownloadLink.String(), "mp4")){
+				downloadCollector.Visit(downloadLink.String())
+			}
+		})
+	}
 
 	// Update Download Link if "Download" HTML on page
 	downloadCollector.OnHTML("div.filedownload", func(e *colly.HTMLElement) {

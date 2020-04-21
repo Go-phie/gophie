@@ -9,16 +9,19 @@ import (
 func testResults(t *testing.T, engine Engine) {
 	counter := map[string]int{}
 	var result 	SearchResult
+	var searchTerm string
 	fmt.Println(engine.String())
 	if !strings.HasPrefix(engine.String(), "TvSeries"){
-		result = engine.Search("jumanji")
+		searchTerm = "jumanji"
 	} else {
 		// search for the flash for movie series
-		result = engine.Search("The Flash")
+		searchTerm = "devs"
 	}
+	result = engine.Search(searchTerm)
 
 	if len(result.Movies) < 1 {
-		t.Errorf("No movies returned")
+		fmt.Println(engine.String())
+		t.Errorf("No movies returned from %v",  engine.String())
 	} else {
 		for _, movie := range result.Movies {
 			if _, ok := counter[movie.DownloadLink.String()]; ok {
@@ -28,9 +31,8 @@ func testResults(t *testing.T, engine Engine) {
 			}
 			if movie.IsSeries == false {
 				downloadlink := movie.DownloadLink.String()
-				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=")) {
-					fmt.Println(downloadlink)
-					t.Errorf("Could not obtain link for single movie")
+				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=")) {
+					t.Errorf("Could not obtain link for single movie, linked returned is %v", downloadlink)
 				}
 			}
 		}

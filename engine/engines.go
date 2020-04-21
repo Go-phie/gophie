@@ -114,6 +114,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 		log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
 	})
 	c.Visit(engine.getParseURL().String())
+	log.Debug(movies)
 	return movies, nil
 }
 
