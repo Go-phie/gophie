@@ -68,11 +68,15 @@ func (engine *TvSeriesEngine) parseSingleMovie(el *colly.HTMLElement, index int)
 		log.Fatal(err)
 	}
 	movie.CoverPhotoLink = cover.String()
-	// Remove all Video: or Movie: Prefixes
 	titleAndDescription := el.ChildTexts("small")
+
 	if len(titleAndDescription) > 1 {
 		movie.Title = strings.TrimSpace(titleAndDescription[0])
 		movie.Description = strings.TrimSpace(titleAndDescription[1])
+		lastSmall := titleAndDescription[len(titleAndDescription) -1]
+		if len(lastSmall) > len(movie.Description) {
+			movie.Description = lastSmall
+		}
 	}
 	link := el.Request.AbsoluteURL(el.ChildAttr("a", "href"))
 	downloadLink, err := url.Parse(link + "&ftype=2")
@@ -91,6 +95,10 @@ func (engine *TvSeriesEngine) updateDownloadProps(downloadCollector *colly.Colle
 		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
 		if len(e.ChildTexts("b")) > 1 {
 			movie.Title = e.ChildTexts("b")[0]
+		}
+		titleAndDescription := e.ChildTexts("small")
+		if len(titleAndDescription) > 1 {
+			movie.Description = titleAndDescription[len(titleAndDescription) - 1]
 		}
 		if e.Request.AbsoluteURL(e.ChildAttr("a", "href")) != e.Request.URL.String(){
 			link := e.Request.AbsoluteURL(e.ChildAttr("a", "href")) + "&ftype=2" 	

@@ -178,7 +178,6 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 				ctx := colly.NewContext()
 				ctx.Put("movieIndex", strconv.Itoa(movieIndex))
 				downloadCollector.Request("GET", descLink, nil, ctx, nil)
-				// downloadCollector.Visit(descLink)
 			}
 		}
 	})
