@@ -72,7 +72,9 @@ func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movi
 	// Remove all Video: or Movie: Prefixes
 	movie.UploadDate = strings.TrimSpace(el.ChildTexts("small")[1])
 	movie.Title = strings.TrimSuffix(strings.TrimSpace(el.ChildText("b")), "<more>")
-	movie.Description = strings.TrimSpace(el.ChildTexts("small")[3])
+	if len(el.ChildTexts("small")) > 3 {
+		movie.Description = strings.TrimSpace(el.ChildTexts("small")[3])
+	}
 	downloadLink, err := url.Parse(el.Request.AbsoluteURL(el.ChildAttr("a", "href")))
 
 	if err != nil {
@@ -97,8 +99,11 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 		}
 		movie.DownloadLink = downloadLink
 		re := regexp.MustCompile(`(.* MB)`)
-		dl := strings.TrimPrefix(re.FindStringSubmatch(e.ChildText("dcounter"))[0], "(")
-		movie.Size = dl
+		stringsub := re.FindStringSubmatch(e.ChildText("dcounter"))
+		if len(stringsub) > 0 {
+			dl := strings.TrimPrefix(stringsub[0], "(")
+			movie.Size = dl
+		}
 		downloadCollector.Visit(downloadLink.String())
 	})
 

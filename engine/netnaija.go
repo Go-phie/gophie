@@ -122,12 +122,17 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 	})
 
 	downloadCollector.OnHTML("h3.file-name", func(e *colly.HTMLElement) {
+		movieIndex := getMovieIndexFromCtx(e.Request)
+		movie := &((*movies)[movieIndex])
 		downloadLink, err := url.Parse(path.Join(strings.TrimSpace(e.ChildAttr("a", "href")), "download"))
 		if err != nil {
 			log.Fatal(err)
 		}
-		(*movies)[getMovieIndexFromCtx(e.Request)].DownloadLink = downloadLink
-		downloadCollector.Visit(e.ChildAttr("a", "href"))
+		movie.DownloadLink = downloadLink
+		// downloadCollector.Visit(e.ChildAttr("a", "href"))
+		ctx := colly.NewContext()
+		ctx.Put("movieIndex", strconv.Itoa(movieIndex))
+		downloadCollector.Request("GET", e.ChildAttr("a", "href"), nil, ctx, nil)
 	})
 
 	downloadCollector.OnHTML("div.video-about", func(e *colly.HTMLElement) {
@@ -145,7 +150,9 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			movie.DownloadLink = downloadLink
 		}
 		if !strings.HasSuffix(movie.DownloadLink.String(), "?d=1") {
-			downloadCollector.Visit(movie.DownloadLink.String())
+			ctx := colly.NewContext()
+			ctx.Put("movieIndex", strconv.Itoa(movieIndex))
+			downloadCollector.Request("GET", movie.DownloadLink.String(), nil, ctx, nil)
 		}
 	})
 
