@@ -14,4 +14,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
 	github.com/tebeka/selenium v0.9.9
+	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
+	google.golang.org/appengine v1.6.5 // indirect
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
