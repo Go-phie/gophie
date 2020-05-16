@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	scraper "github.com/mensaah/go-cloudflare-scraper"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,6 +30,7 @@ func (m Mode) String() string {
 
 // Engine : interface for all engines
 type Engine interface {
+	getName() string
 	getParseURL() *url.URL
 	Search(param ...string) SearchResult
 	List(page int) SearchResult
@@ -52,6 +55,16 @@ func Scrape(engine Engine) ([]Movie, error) {
 		// even if the collector is restarted
 		colly.CacheDir("./gophie_cache"),
 	)
+
+	// Add Cloud Flare scraper bypasser
+	if engine.getName() == "netnaija" {
+		t, err := scraper.NewTransport(http.DefaultTransport)
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.WithTransport(t)
+	}
+
 	// Another collector for download Links
 	downloadLinkCollector := c.Clone()
 
