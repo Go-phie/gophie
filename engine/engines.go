@@ -79,6 +79,14 @@ func Scrape(engine Engine) ([]Movie, error) {
 		log.Fatal(err)
 	}
 	c.OnHTML(main, func(e *colly.HTMLElement) {
+		// recreate our own HTML using Selenium
+
+
+	// Make Selenium REquests
+	e = Request->colly.HTMLElement
+
+
+
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
 			movie, err := engine.parseSingleMovie(el, movieIndex)
 			if err != nil {
