@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bisoncorps/gophie/transport"
 	"github.com/gocolly/colly/v2"
-	scraper "github.com/mensaah/go-cloudflare-scraper"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -57,12 +57,15 @@ func Scrape(engine Engine) ([]Movie, error) {
 	)
 
 	// Add Cloud Flare scraper bypasser
-	if engine.getName() == "netnaija" {
-		t, err := scraper.NewTransport(http.DefaultTransport)
+	if engine.getName() == "NetNaija" {
+		log.Debug("Switching to Selenium transport")
+		t, err := transport.NewTransport(http.DefaultTransport)
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		c.WithTransport(t)
+		c.SetCookieJar(t.Cookies)
 	}
 
 	// Another collector for download Links
@@ -79,14 +82,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 		log.Fatal(err)
 	}
 	c.OnHTML(main, func(e *colly.HTMLElement) {
-		// recreate our own HTML using Selenium
-
-
-	// Make Selenium REquests
-	e = Request->colly.HTMLElement
-
-
-
+		log.Debug("Random")
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
 			movie, err := engine.parseSingleMovie(el, movieIndex)
 			if err != nil {
@@ -106,6 +102,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 
 	c.OnResponse(func(r *colly.Response) {
 		log.Debugf("Done %v", r.Request.URL.String())
+		log.Debug(string(r.Body[:len(r.Body)]))
 	})
 
 	// Attach Movie Index to Context before making visits

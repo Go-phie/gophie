@@ -81,7 +81,7 @@ func (t *Transport) retrieveResponse(resp *http.Response) (*http.Response, error
 	firefoxCaps := firefox.Capabilities{Args: []string{"-headless"}}
 
 	caps.AddFirefox(firefoxCaps)
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("https://13.59.61.191:%d/wd/hub", port))
+	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://13.59.61.191:%d/wd/hub", port))
 	if err != nil {
 		panic(err)
 	}
@@ -89,8 +89,9 @@ func (t *Transport) retrieveResponse(resp *http.Response) (*http.Response, error
 	if err := wd.Get(req.URL.String()); err != nil {
 		panic(err)
 	}
-	time.Sleep(7000 * time.Millisecond)
+	time.Sleep(10000 * time.Millisecond)
 	body, _ := wd.PageSource()
+	fmt.Println(body)
 	response := &http.Response{
 		Status:        "200 OK",
 		StatusCode:    200,
@@ -100,10 +101,21 @@ func (t *Transport) retrieveResponse(resp *http.Response) (*http.Response, error
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        req.Header,
 	}
-	if cookies, err := wd.GetCookies(); err != nil {
-		t.Cookies.SetCookies(req.URL, cookies)
+	if cookies, err := wd.GetCookies(); err == nil {
+		httpCookies := []*http.Cookie{}
+		for _, cookie := range cookies {
+			httpCookies = append(httpCookies, &http.Cookie{
+				Name:    cookie.Name,
+				Value:   cookie.Value,
+				Path:    cookie.Path,
+				Domain:  cookie.Domain,
+				Secure:  cookie.Secure,
+				Expires: time.Unix(int64(cookie.Expiry), 0),
+			})
+		}
+		t.Cookies.SetCookies(req.URL, httpCookies)
 	}
 
 	return response, nil
