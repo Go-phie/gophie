@@ -56,16 +56,16 @@ func Scrape(engine Engine) ([]Movie, error) {
 		colly.CacheDir("./gophie_cache"),
 	)
 
+	t, err := transport.NewTransport(http.DefaultTransport)
 	// Add Cloud Flare scraper bypasser
 	if engine.getName() == "NetNaija" {
 		log.Debug("Switching to Selenium transport")
-		t, err := transport.NewTransport(http.DefaultTransport)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		c.WithTransport(t)
-		c.SetCookieJar(t.Cookies)
+		//    c.SetCookieJar(t.Cookies)
 	}
 
 	// Another collector for download Links
@@ -102,7 +102,9 @@ func Scrape(engine Engine) ([]Movie, error) {
 
 	c.OnResponse(func(r *colly.Response) {
 		log.Debugf("Done %v", r.Request.URL.String())
-		log.Debug(string(r.Body[:len(r.Body)]))
+		if engine.getName() == "NetNaija" {
+			c.SetCookieJar(t.Cookies)
+		}
 	})
 
 	// Attach Movie Index to Context before making visits

@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"reflect"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/firefox"
 )
@@ -16,8 +17,9 @@ import (
 const userAgent = `Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36`
 
 type Transport struct {
-	upstream http.RoundTripper
-	Cookies  http.CookieJar
+	upstream         http.RoundTripper
+	Cookies          http.CookieJar
+	webDriverCookies []selenium.Cookie
 }
 
 func NewClient() (c *http.Client, err error) {
@@ -40,10 +42,10 @@ func NewTransport(upstream http.RoundTripper) (*Transport, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transport{upstream, jar}, nil
+	return &Transport{upstream, jar, []selenium.Cookie{}}, nil
 }
 
-func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
+func (t *Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 	if r.Header.Get("User-Agent") == "" {
 		r.Header.Set("User-Agent", userAgent)
 	}
@@ -60,6 +62,7 @@ func (t Transport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Check if Cloudflare anti-bot is on
 	serverHeader := resp.Header.Get("Server")
 	if resp.StatusCode == 503 && (serverHeader == "cloudflare-nginx" || serverHeader == "cloudflare") {
+		resp.Body.Close()
 		log.Printf("Solving challenge for %s by calling remote selenium", resp.Request.URL.Hostname())
 		resp, err := t.retrieveResponse(resp)
 
@@ -75,7 +78,8 @@ func (t *Transport) retrieveResponse(resp *http.Response) (*http.Response, error
 
 	req := resp.Request
 
-	req.Header.Set("User-Agent", resp.Request.Header.Get("User-Agent"))
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Content-Type", "text/html")
 
 	caps := selenium.Capabilities{"browserName": "firefox"}
 	firefoxCaps := firefox.Capabilities{Args: []string{"-headless"}}
@@ -85,13 +89,22 @@ func (t *Transport) retrieveResponse(resp *http.Response) (*http.Response, error
 	if err != nil {
 		panic(err)
 	}
+	if !reflect.DeepEqual(t.webDriverCookies, []selenium.Cookie{}) {
+		log.Debug("Found cookies, setting remote selenium cookies")
+		for _, cookie := range t.webDriverCookies {
+			wd.AddCookie(&cookie)
+		}
+	}
 	defer wd.Quit()
 	if err := wd.Get(req.URL.String()); err != nil {
 		panic(err)
 	}
+
+	//  if reflect.DeepEqual(t.webDriverCookies, []selenium.Cookie{}) {
 	time.Sleep(10000 * time.Millisecond)
+	//  }
 	body, _ := wd.PageSource()
-	fmt.Println(body)
+	log.Debug(body)
 	response := &http.Response{
 		Status:        "200 OK",
 		StatusCode:    200,
@@ -116,6 +129,7 @@ func (t *Transport) retrieveResponse(resp *http.Response) (*http.Response, error
 			})
 		}
 		t.Cookies.SetCookies(req.URL, httpCookies)
+		t.webDriverCookies = cookies
 	}
 
 	return response, nil
