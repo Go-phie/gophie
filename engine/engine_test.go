@@ -8,10 +8,10 @@ import (
 
 func testResults(t *testing.T, engine Engine) {
 	counter := map[string]int{}
-	var result 	SearchResult
+	var result SearchResult
 	var searchTerm string
 	fmt.Println(engine.String())
-	if !strings.HasPrefix(engine.String(), "TvSeries"){
+	if !strings.HasPrefix(engine.String(), "TvSeries") {
 		searchTerm = "jumanji"
 	} else {
 		// search for the flash for movie series
@@ -21,7 +21,7 @@ func testResults(t *testing.T, engine Engine) {
 
 	if len(result.Movies) < 1 {
 		fmt.Println(engine.String())
-		t.Errorf("No movies returned from %v",  engine.String())
+		t.Errorf("No movies returned from %v", engine.String())
 	} else {
 		for _, movie := range result.Movies {
 			if _, ok := counter[movie.DownloadLink.String()]; ok {
@@ -42,6 +42,8 @@ func testResults(t *testing.T, engine Engine) {
 func TestEngines(t *testing.T) {
 	engines := GetEngines()
 	for _, engine := range engines {
-		testResults(t, engine)
+		if !strings.HasPrefix(engine.String(), "NetNaija") {
+			testResults(t, engine)
+		}
 	}
 }

@@ -7,6 +7,6 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 *.swp
-
+cookies.json
 gophie_cache
 Gophie_Downloads
