@@ -9,13 +9,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bisoncorps/gophie/transport"
+	"github.com/go-phie/gophie/transport"
 	"github.com/gocolly/colly/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // Mode : The mode of operation for scraping
 type Mode int
+
+// Dynamically assign Selenium URL
+var ()
 
 const (
 	// SearchMode : in this mode a query is searched for
@@ -50,23 +54,36 @@ type Engine interface {
 
 // Scrape : Parse queries a url and return results
 func Scrape(engine Engine) ([]Movie, error) {
+	// Config Vars
+	seleniumURL := fmt.Sprintf("%s/wd/hub", viper.GetString("selenium-url"))
+	cacheDir := viper.GetString("cache-dir")
+	var (
+		t   *transport.Transport
+		err error
+	)
+
 	c := colly.NewCollector(
 		// Cache responses to prevent multiple download of pages
 		// even if the collector is restarted
-		colly.CacheDir("./gophie_cache"),
+		colly.CacheDir(cacheDir),
 	)
 
-	t, err := transport.NewTransport(http.DefaultTransport)
 	// Add Cloud Flare scraper bypasser
 	if engine.getName() == "NetNaija" {
 		log.Debug("Switching to Selenium transport")
+		t, err = transport.NewSeleniumTransport(http.DefaultTransport, seleniumURL)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		c.WithTransport(t)
-		//    c.SetCookieJar(t.Cookies)
 	}
+	// Close the WebDriver Instance
+	defer func() {
+		if engine.getName() == "NetNaija" {
+			t.WebDriver.Quit()
+		}
+	}()
 
 	// Another collector for download Links
 	downloadLinkCollector := c.Clone()
@@ -81,8 +98,9 @@ func Scrape(engine Engine) ([]Movie, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	c.OnHTML(main, func(e *colly.HTMLElement) {
-		log.Debug("Random")
+		log.Info("Got Request ", e)
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
 			movie, err := engine.parseSingleMovie(el, movieIndex)
 			if err != nil {
@@ -102,9 +120,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 
 	c.OnResponse(func(r *colly.Response) {
 		log.Debugf("Done %v", r.Request.URL.String())
-		if engine.getName() == "NetNaija" {
-			c.SetCookieJar(t.Cookies)
-		}
+		log.Info(string(r.Body))
 	})
 
 	// Attach Movie Index to Context before making visits
@@ -134,7 +150,6 @@ func Scrape(engine Engine) ([]Movie, error) {
 		log.Debugf("Retrieved Download Link %v\n", movie.DownloadLink)
 	})
 	c.Visit(engine.getParseURL().String())
-	log.Debug(movies)
 	return movies, nil
 }
 
