@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bisoncorps/gophie/cmd"
+	"github.com/go-phie/gophie/cmd"
 )
 
 func main() {

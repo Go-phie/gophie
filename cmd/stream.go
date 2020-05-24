@@ -18,8 +18,8 @@ package cmd
 import (
 	"strings"
 
-	"github.com/bisoncorps/gophie/engine"
 	"github.com/bisoncorps/mplayer"
+	"github.com/go-phie/gophie/engine"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

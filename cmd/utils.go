@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/bisoncorps/gophie/engine"
 	"github.com/briandowns/spinner"
+	"github.com/go-phie/gophie/engine"
 	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"

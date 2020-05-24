@@ -42,3 +42,7 @@ func (p *Props) getParseURL() *url.URL {
 	}
 	return p.ListURL
 }
+
+func (p *Props) getName() string {
+	return p.Name
+}

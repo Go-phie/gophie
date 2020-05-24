@@ -16,8 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/bisoncorps/gophie/downloader"
-	"github.com/bisoncorps/gophie/engine"
+	"github.com/go-phie/gophie/downloader"
+	"github.com/go-phie/gophie/engine"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
