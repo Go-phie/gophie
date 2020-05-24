@@ -81,14 +81,9 @@ Gophie - Bisoncorp (2020) (https://github.com/go-phie/gophie)
 
 For Development use `go run main.go [command]`
 
-### API
-
-The complete API documentation is available on [Stoplight](https://stoplight.io/p/docs/gh/go-phie/gophie/Gophie.v1.yaml?srn=gh/go-phie/gophie/)
-
-
 ## Deployment
 
-The deployed API version from `gophie api` is available on [Heroku](https://gophie.herokuapp.com). Please read the API documentation for usage
+The deployed API version from `gophie api` is available on [Heroku](https://deploy-gophie.herokuapp.com). Please read the API documentation for usage
 
 ## License
 
