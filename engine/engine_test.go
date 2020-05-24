@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	_ "github.com/go-phie/gophie/cmd"
 )
 
 func testResults(t *testing.T, engine Engine) {
@@ -42,8 +44,6 @@ func testResults(t *testing.T, engine Engine) {
 func TestEngines(t *testing.T) {
 	engines := GetEngines()
 	for _, engine := range engines {
-		if !strings.HasPrefix(engine.String(), "NetNaija") {
-			testResults(t, engine)
-		}
+		testResults(t, engine)
 	}
 }
