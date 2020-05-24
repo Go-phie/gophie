@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	_ "github.com/go-phie/gophie/cmd"
 )
 
 func testResults(t *testing.T, engine Engine) {
