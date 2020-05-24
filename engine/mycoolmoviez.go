@@ -67,8 +67,10 @@ func (engine *MyCoolMoviez) parseSingleMovie(el *colly.HTMLElement, index int) (
 	movie.Title = strings.TrimSpace(el.ChildText("a"))
 	re := regexp.MustCompile(`(\d+)`)
 	stringsub := re.FindStringSubmatch(movie.Title)
-	year, _ := strconv.Atoi(stringsub[0])
-	movie.Year = year
+	if len(stringsub) > 0 {
+		year, _ := strconv.Atoi(stringsub[0])
+		movie.Year = year
+	}
 	downloadLink, err := url.Parse(el.Request.AbsoluteURL(el.ChildAttr("a", "href")))
 
 	if err != nil {
@@ -113,9 +115,12 @@ func (engine *MyCoolMoviez) updateDownloadProps(downloadCollector *colly.Collect
 				movie.DownloadLink = downloadlink
 			}
 		}
-		re := regexp.MustCompile(`[ Size : (\d+) MB ]`)
+		re := regexp.MustCompile(`(\d+)[\s]?MB`)
 		stringsub := re.FindStringSubmatch(e.ChildText("span"))
-		movie.Size = stringsub[0]
+		if len(stringsub) > 0 {
+			movie.Size = strings.Replace(stringsub[0], " ", "", -1)
+		}
+		log.Debug(movie.Size)
 		downloadCollector.Visit(movie.DownloadLink.String())
 	})
 
