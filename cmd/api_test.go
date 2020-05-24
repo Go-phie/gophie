@@ -10,7 +10,7 @@ func TestSearchAPI(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(SearchHandler))
 	defer ts.Close()
 
-	res, _ := http.Get(ts.URL + "?query=good+boys&engine=netnaija")
+	res, _ := http.Get(ts.URL + "?query=good+boys&engine=mycoolmoviez")
 	if res.StatusCode != 200 {
 		t.Errorf("Server failing")
 	}

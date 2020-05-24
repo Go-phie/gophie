@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/go-phie/gophie/cmd"
+	// _ "github.com/go-phie/gophie/cmd"
 )
 
 func testResults(t *testing.T, engine Engine) {
@@ -22,7 +22,6 @@ func testResults(t *testing.T, engine Engine) {
 	result = engine.Search(searchTerm)
 
 	if len(result.Movies) < 1 {
-		fmt.Println(engine.String())
 		t.Errorf("No movies returned from %v", engine.String())
 	} else {
 		for _, movie := range result.Movies {

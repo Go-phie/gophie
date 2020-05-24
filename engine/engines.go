@@ -100,7 +100,6 @@ func Scrape(engine Engine) ([]Movie, error) {
 	}
 
 	c.OnHTML(main, func(e *colly.HTMLElement) {
-		log.Info("Got Request ", e)
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
 			movie, err := engine.parseSingleMovie(el, movieIndex)
 			if err != nil {
@@ -120,7 +119,6 @@ func Scrape(engine Engine) ([]Movie, error) {
 
 	c.OnResponse(func(r *colly.Response) {
 		log.Debugf("Done %v", r.Request.URL.String())
-		log.Info(string(r.Body))
 	})
 
 	// Attach Movie Index to Context before making visits

@@ -9,4 +9,5 @@
 *.swp
 cookies.json
 gophie_cache
+downloadList.json
 Gophie_Downloads

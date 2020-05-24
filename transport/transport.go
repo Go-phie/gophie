@@ -2,6 +2,8 @@ package transport
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -18,6 +20,21 @@ const (
 type Transport struct {
 	upstream  http.RoundTripper
 	WebDriver selenium.WebDriver
+}
+
+func NewClient() (c *http.Client, err error) {
+	seleniumURL := fmt.Sprintf("%s/wd/hub", os.Getenv("GOPHIE_SELENIUM_URL"))
+	fmt.Println("selenium url " + seleniumURL)
+	scraperTransport, err := NewSeleniumTransport(http.DefaultTransport, seleniumURL)
+	if err != nil {
+		return
+	}
+
+	c = &http.Client{
+		Transport: scraperTransport,
+	}
+
+	return
 }
 
 func NewSeleniumTransport(upstream http.RoundTripper, seleniumURL string) (*Transport, error) {

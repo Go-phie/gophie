@@ -120,7 +120,6 @@ func (engine *MyCoolMoviez) updateDownloadProps(downloadCollector *colly.Collect
 		if len(stringsub) > 0 {
 			movie.Size = strings.Replace(stringsub[0], " ", "", -1)
 		}
-		log.Debug(movie.Size)
 		downloadCollector.Visit(movie.DownloadLink.String())
 	})
 

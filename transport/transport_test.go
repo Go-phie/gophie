@@ -1,9 +1,7 @@
 package transport
 
 import (
-	"fmt"
 	"io/ioutil"
-	"net/http"
 	"testing"
 )
 
@@ -13,8 +11,7 @@ func TestTransport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	res, err := c.Get("https://thenetnaija.com/videos/movies")
-	fmt.Println(c.Jar)
+	res, err := c.Get("https://thenetnaija.com/videos/movies/")
 
 	if err != nil {
 		t.Fatal(err)
