@@ -51,7 +51,7 @@ var rootCmd = &cobra.Command{
 		}
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		fmt.Println("\n\nGophie - Bisoncorp (2020) (https://github.com/bisoncorps/gophie)")
+		fmt.Println("\n\nGophie - Bisoncorp (2020) (https://github.com/go-phie/gophie)")
 	},
 }
 

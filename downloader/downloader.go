@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/bisoncorps/gophie/engine"
+	"github.com/go-phie/gophie/engine"
 	"github.com/iawia002/annie/config"
 	"github.com/iawia002/annie/downloader"
 	"github.com/iawia002/annie/request"
