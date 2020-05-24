@@ -16,11 +16,11 @@ limitations under the License.
 package cmd
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 
-	"github.com/bisoncorps/gophie/downloader"
-	"github.com/bisoncorps/gophie/engine"
+	"github.com/go-phie/gophie/downloader"
+	"github.com/go-phie/gophie/engine"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,7 +41,7 @@ var searchCmd = &cobra.Command{
 		page := strconv.Itoa(pageNum)
 		query := strings.Join(args, " ")
 		selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
-		// only run pagination for 
+		// only run pagination for
 		if strings.ToLower(viper.GetString("engine")) == "tvseries" {
 			searchPager(query, page)
 		} else {
@@ -79,7 +79,7 @@ func processSearch(e engine.Engine, param ...string) engine.Movie {
 	var choiceIndex int
 	var result engine.SearchResult
 	query := param[0]
-	if len(param)> 1 {
+	if len(param) > 1 {
 		pageNum, _ = strconv.Atoi(param[1])
 		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(param...) })
 		var items []string
@@ -88,13 +88,13 @@ func processSearch(e engine.Engine, param ...string) engine.Movie {
 			items = append([]string{"<<< Previous Page"}, items...)
 		}
 		choiceIndex, choice = SelectOpts(result.Query, items)
-	
+
 		if choiceIndex != len(items)-1 {
 			if choiceIndex == 0 && pageNum != 1 {
-				searchPager(query, strconv.Itoa(pageNum -1))
+				searchPager(query, strconv.Itoa(pageNum-1))
 			}
 		} else {
-			searchPager(query, strconv.Itoa(pageNum +1))
+			searchPager(query, strconv.Itoa(pageNum+1))
 		}
 	} else {
 		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(query) })

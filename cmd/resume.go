@@ -17,7 +17,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"github.com/bisoncorps/gophie/downloader"
+	"github.com/go-phie/gophie/downloader"
 	"github.com/manifoldco/promptui"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

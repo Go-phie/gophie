@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bisoncorps/gophie/engine"
+	"github.com/go-phie/gophie/engine"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
