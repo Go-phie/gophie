@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	log "github.com/sirupsen/logrus"
@@ -26,7 +27,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-const defaultEngine = "netnaija"
+// Defaults
+const (
+	defaultEngine = "netnaija"
+)
 
 var (
 	// Engine : The Engine to use for downloads
@@ -35,6 +39,10 @@ var (
 	verbose bool
 	// OutputPath :
 	outputPath string
+	// Selenium URL: The URL of the selenium instance to connect to
+	seleniumURL string
+	// CacheDir: The Directory to store all colly files
+	cacheDir string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -72,13 +80,20 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(
 		&engineFlag, "engine", "e", defaultEngine, "The Engine to use for querying and downloading")
 
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Display Verbose logs")
 	rootCmd.PersistentFlags().StringVarP(
-		&outputPath, "output-dir", "o", "", "Path to download files to")
+		&cacheDir, "cache-dir", "c", "", "The directory to store/lookup cache")
+	rootCmd.PersistentFlags().StringVarP(
+		&seleniumURL, "selenium-url", "s", "", "The URL of selenium instance to use")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Display Verbose logs")
+	rootCmd.PersistentFlags().StringVarP(&outputPath, "output-dir", "o", "", "Path to download files to")
+
 	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	viper.BindPFlag("engine", rootCmd.PersistentFlags().Lookup("engine"))
+	viper.BindPFlag("selenium-url", rootCmd.PersistentFlags().Lookup("selenium-url"))
 	viper.BindPFlag("output-dir", rootCmd.PersistentFlags().Lookup("output-dir"))
+	viper.BindPFlag("cache-dir", rootCmd.PersistentFlags().Lookup("cache-dir"))
+
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -89,16 +104,19 @@ func initConfig() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 	// Defaults for Gophie Configs
-	viper.SetDefault("engine", defaultEngine)
-	viper.SetDefault("verbose", false)
+	viper.SetDefault("selenium-url", "http://localhost:4444")
 	viper.SetDefault("output-dir", path.Join(home, "Downloads", "Gophie"))
-	viper.Set("gophie_cache", path.Join(home, ".gophie_cache"))
-	if err := os.MkdirAll(viper.GetString("gophie_cache"), os.ModePerm); err != nil {
+	viper.Set("cache-dir", path.Join(home, ".gophie_cache"))
+	if err := os.MkdirAll(viper.GetString("cache-dir"), os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
 
 	// Configs From Env
+
+	replacer := strings.NewReplacer("-", "_")
+	viper.SetEnvKeyReplacer(replacer)
 	viper.SetEnvPrefix("gophie") // will be uppercased automatically
 	viper.AutomaticEnv()         // read in environment variables that match
 

@@ -56,17 +56,22 @@ func (engine *NetNaijaEngine) String() string {
 }
 
 func (engine *NetNaijaEngine) getParseAttrs() (string, string, error) {
-	var article string
+	var (
+		article string
+		main    string
+	)
 	// When in search mode, results are in <article class="result">
 	switch engine.mode {
 	case SearchMode:
 		article = "article.result"
+		main = "main"
 	case ListMode:
+		main = "main.file-list"
 		article = "article.a-file"
 	default:
 		return "", "", fmt.Errorf("Invalid mode %v", engine.mode)
 	}
-	return "main", article, nil
+	return main, article, nil
 }
 
 func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movie, error) {
@@ -177,7 +182,7 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			if err != nil {
 				log.Fatal(err)
 			}
-			if strings.HasSuffix(movie.DownloadLink.String(), "/download"){
+			if strings.HasSuffix(movie.DownloadLink.String(), "/download") {
 				descLink = strings.TrimSuffix(movie.DownloadLink.String(), "/download")
 			}
 			movie.DownloadLink = downloadLink
