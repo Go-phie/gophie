@@ -7,7 +7,7 @@ info:
     email: diretnandomnan@gmail.com
     url: 'https://github.com/bisoncorps'
   license:
-    url: 'https://github.com/bisoncorps/gophie/blob/master/LICENSE'
+    url: 'https://github.com/go-phie/gophie/blob/master/LICENSE'
     name: License(GNU AGPL v3.0)
   description: |-
     I was visiting my favourite low data movie download site, but that day was particularly annoying. I moved to click and kept getting redirected to nude pictures. I just want free movies, I cried. Bisoncorps then proceeded to create Gophie. It is a CLI tool which enables you to be the cheapskate you are without getting guilt tripped. It was eventually turned into a functional API to enable searching and listing of movies.
