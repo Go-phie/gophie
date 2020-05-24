@@ -31,7 +31,7 @@ func testResults(t *testing.T, engine Engine) {
 			}
 			if movie.IsSeries == false {
 				downloadlink := movie.DownloadLink.String()
-				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=")) {
+				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=") || strings.Contains(downloadlink, "mycoolmoviez")) {
 					t.Errorf("Could not obtain link for single movie, linked returned is %v", downloadlink)
 				}
 			}

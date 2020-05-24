@@ -19,7 +19,7 @@ type MyCoolMoviez struct {
 
 // NewMyCoolMoviezEngine : create a new engine for scraping mynewcoolmovies
 func NewMyCoolMoviezEngine() *MyCoolMoviez {
-	base := "https://mycoolmoviez.site"
+	base := "https://mycoolmoviez.website"
 	baseURL, err := url.Parse(base)
 	if err != nil {
 		log.Fatal(err)
