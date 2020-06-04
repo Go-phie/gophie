@@ -97,10 +97,12 @@ func searchPager(param ...string) {
 
 func processSearch(e engine.Engine, retrievedResult engine.SearchResult, param ...string) engine.Movie {
 	// Initialize process and show loader on terminal and store result in result
-	var choice string
-	var choiceIndex int
-	var result engine.SearchResult
-	var items []string
+	var (
+		choice      string
+		choiceIndex int
+		result      engine.SearchResult
+		items       []string
+	)
 	query := param[0]
 	if len(param) > 1 {
 		pageNum, _ = strconv.Atoi(param[1])

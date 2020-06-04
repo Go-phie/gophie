@@ -49,3 +49,11 @@ func SelectOpts(title string, options []string) (int, string) {
 	}
 	return index, result
 }
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}

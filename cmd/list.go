@@ -24,11 +24,13 @@ import (
 	"reflect"
 )
 
-var pageNum int
-var compResult = engine.SearchResult{
-	Query:  "",
-	Movies: []engine.Movie{},
-}
+var (
+	pageNum    int
+	compResult = engine.SearchResult{
+		Query:  "",
+		Movies: []engine.Movie{},
+	}
+)
 
 func listPager(pageNum int) {
 	selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
@@ -87,10 +89,12 @@ func init() {
 // Just abstract away the listing process so that it can be reused in other commands
 func processList(pageNum int, e engine.Engine, retrievedResult engine.SearchResult) engine.Movie {
 	// Initialize process and show loader on terminal and store result in result
-	var result engine.SearchResult
-	var choice string
-	var choiceIndex int
-	var items []string
+	var (
+		result      engine.SearchResult
+		choice      string
+		choiceIndex int
+		items       []string
+	)
 	if reflect.DeepEqual(retrievedResult, compResult) {
 		result = ProcessFetchTask(func() engine.SearchResult { return e.List(pageNum) })
 		items = append(result.Titles(), []string{">>> Next Page"}...)

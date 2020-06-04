@@ -18,18 +18,39 @@ package cmd
 import (
 	"encoding/json"
 	"html/template"
+	"net"
 	"net/http"
+	"net/url"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-phie/gophie/engine"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var port string
+var (
+	port string
+	// WhiteListedHosts a list of hosts that can access api
+	WhiteListedHosts []string
+)
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
+func authIP(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+
+		originURL, _ := url.Parse(r.Header.Get("Origin"))
+		if err == nil && (contains(WhiteListedHosts, ip) || contains(WhiteListedHosts, "*") || contains(WhiteListedHosts, originURL.Host)) {
+			handler.ServeHTTP(w, r)
+		}
+		log.Debug("Rejecting Request: Host not whitelisted")
+		accessDeniedHandler(w, r)
+	}
 }
 
 func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
@@ -46,6 +67,11 @@ func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 		}
 		handler.ServeHTTP(w, r)
 	}
+}
+
+func accessDeniedHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Unauthorized Access", http.StatusUnauthorized)
+	return
 }
 
 // DocHandler : renders iframe pointing to hosted docs
@@ -163,8 +189,8 @@ var apiCmd = &cobra.Command{
 	Short: "host gophie as an API on a PORT env variable, fallback to set argument",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		http.HandleFunc("/search", getDefaultsMiddleware(SearchHandler))
-		http.HandleFunc("/list", getDefaultsMiddleware(ListHandler))
+		http.HandleFunc("/search", authIP(getDefaultsMiddleware(SearchHandler)))
+		http.HandleFunc("/list", authIP(getDefaultsMiddleware(ListHandler)))
 		http.HandleFunc("/engine", EngineHandler)
 		http.HandleFunc("/", DocHandler)
 
@@ -178,6 +204,9 @@ var apiCmd = &cobra.Command{
 }
 
 func init() {
+	if os.Getenv("WHITE_LISTED_HOSTS") != "" {
+		WhiteListedHosts = strings.Split(os.Getenv("WHITE_LISTED_HOSTS"), ",")
+	}
 	apiCmd.Flags().StringVarP(&port, "port", "p", "3000", "Port to run application server on")
 	rootCmd.AddCommand(apiCmd)
 }
