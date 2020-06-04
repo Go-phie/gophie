@@ -31,7 +31,9 @@ Gophie is a tool to help you search, stream and download movies from movie sites
 
 - TvSeries
 
-More Sites and more variations (such as animes and series) will come in to play quite soon.
+### Anime
+
+- AnimeOut
 
 Gophie also has [mobile](https://github.com/Go-phie/gophie-mobile) and [web](https://github.com/Go-phie/gophie-web) clients.
 

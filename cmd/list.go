@@ -21,20 +21,51 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"reflect"
 )
 
 var pageNum int
+var compResult = engine.SearchResult{
+	Query:  "",
+	Movies: []engine.Movie{},
+}
 
 func listPager(pageNum int) {
 	selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	selectedMovie := processList(pageNum, selectedEngine)
+	selectedMovie := processList(pageNum, selectedEngine, compResult)
 	log.Debugf("Movie: %v\n", selectedMovie)
 	// Start Movie Download
-	if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
-		log.Fatal(err)
+	if len(selectedMovie.SDownloadLink) < 1 {
+		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		var movieArray []engine.Movie
+		index := 0
+		for key, val := range selectedMovie.SDownloadLink {
+			movieArray = append(movieArray,
+				engine.Movie{
+					Index:          index,
+					Title:          key,
+					IsSeries:       false,
+					Source:         selectedMovie.Source,
+					DownloadLink:   val,
+					CoverPhotoLink: selectedMovie.CoverPhotoLink,
+					Description:    selectedMovie.Description,
+				})
+			index++
+		}
+		searchResult := engine.SearchResult{
+			Query:  selectedMovie.Title + "EPISODES",
+			Movies: movieArray,
+		}
+		selectedMovie = processList(pageNum, selectedEngine, searchResult)
+		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -54,22 +85,34 @@ func init() {
 }
 
 // Just abstract away the listing process so that it can be reused in other commands
-func processList(pageNum int, e engine.Engine) engine.Movie {
+func processList(pageNum int, e engine.Engine, retrievedResult engine.SearchResult) engine.Movie {
 	// Initialize process and show loader on terminal and store result in result
-	result := ProcessFetchTask(func() engine.SearchResult { return e.List(pageNum) })
+	var result engine.SearchResult
+	var choice string
+	var choiceIndex int
 	var items []string
-	items = append(result.Titles(), []string{">>> Next Page"}...)
-	if pageNum != 1 {
-		items = append([]string{"<<< Previous Page"}, items...)
-	}
-	choiceIndex, choice := SelectOpts(result.Query, items)
+	if reflect.DeepEqual(retrievedResult, compResult) {
+		result = ProcessFetchTask(func() engine.SearchResult { return e.List(pageNum) })
+		items = append(result.Titles(), []string{">>> Next Page"}...)
+		if pageNum != 1 {
+			items = append([]string{"<<< Previous Page"}, items...)
+		}
+		choiceIndex, choice = SelectOpts(result.Query, items)
 
-	if choiceIndex != len(items)-1 {
-		if choiceIndex == 0 && pageNum != 1 {
-			listPager(pageNum - 1)
+		if choiceIndex != len(items)-1 {
+			if choiceIndex == 0 && pageNum != 1 {
+				listPager(pageNum - 1)
+			}
+		} else {
+			listPager(pageNum + 1)
 		}
 	} else {
-		listPager(pageNum + 1)
+		result = retrievedResult
+		items = append([]string{"<<< MAIN PAGE"}, result.Titles()...)
+		choiceIndex, choice = SelectOpts(result.Query, items)
+		if choiceIndex == 0 {
+			listPager(pageNum)
+		}
 	}
 
 	selectedMovie, err := result.GetMovieByTitle(choice)

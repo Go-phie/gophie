@@ -161,7 +161,7 @@ type Movie struct {
 	DownloadLink   *url.URL
 	Year           int
 	IsSeries       bool
-	SDownloadLink  []*url.URL // Other links for downloads if movies is series
+	SDownloadLink  map[string]*url.URL // Other links for downloads if movies is series
 	UploadDate     string
 	Source         string // The Engine From which it is gotten from
 }
@@ -170,7 +170,7 @@ type Movie struct {
 type MovieJSON struct {
 	Movie
 	DownloadLink  string
-	SDownloadLink []string
+	SDownloadLink map[string]string
 }
 
 func (m *Movie) String() string {
@@ -179,9 +179,9 @@ func (m *Movie) String() string {
 
 // MarshalJSON Json structure to return from api
 func (m *Movie) MarshalJSON() ([]byte, error) {
-	var sDownloadLink []string
-	for _, link := range m.SDownloadLink {
-		sDownloadLink = append(sDownloadLink, link.String())
+	var sDownloadLink map[string]string
+	for key, val := range m.SDownloadLink {
+		sDownloadLink[key] = val.String()
 	}
 
 	movie := MovieJSON{
@@ -237,6 +237,7 @@ func GetEngines() map[string]Engine {
 	engines["besthdmovies"] = NewBestHDEngine()
 	engines["tvseries"] = NewTvSeriesEngine()
 	engines["mycoolmoviez"] = NewMyCoolMoviezEngine()
+	engines["animeout"] = NewAnimeOutEngine()
 	return engines
 }
 

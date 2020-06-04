@@ -198,14 +198,16 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 	downloadCollector.OnHTML("div.video-series-latest-episodes", func(inn *colly.HTMLElement) {
 		movie := &((*movies)[getMovieIndexFromCtx(inn.Request)])
 		movie.IsSeries = true
-		inn.ForEach("a", func(_ int, e *colly.HTMLElement) {
+		video_map := map[string]*url.URL{}
+		inn.ForEach("a", func(num int, e *colly.HTMLElement) {
 			downloadLink, err := url.Parse(e.Attr("href"))
 			if err != nil {
 				log.Fatal(err)
 			}
 			downloadLink.Path = path.Join(downloadLink.Path, "download")
-			movie.SDownloadLink = append(movie.SDownloadLink, downloadLink)
+			video_map[strconv.Itoa(num)] = downloadLink
 		})
+		movie.SDownloadLink = video_map
 	})
 }
 

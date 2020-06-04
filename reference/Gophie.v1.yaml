@@ -33,8 +33,12 @@ info:
     ### Series
 
     - [TvSeries](https://tvseries.in)
+
+    ### Anime
+
+    - [AnimeOut](https://www.animeout.xyz)
 servers:
-  - url: 'https://gophie.herokuapp.com'
+  - url: 'https://deploy-gophie.herokuapp.com'
     description: Heroku server
 paths:
   /list:

@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -40,17 +41,11 @@ var searchCmd = &cobra.Command{
 		// Engine is set from root.go
 		page := strconv.Itoa(pageNum)
 		query := strings.Join(args, " ")
-		selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
 		// only run pagination for
 		if strings.ToLower(viper.GetString("engine")) == "tvseries" {
 			searchPager(query, page)
 		} else {
-			selectedMovie := processSearch(selectedEngine, query)
-			log.Debugf("Movie: %v\n", selectedMovie)
-			// Start Movie Download
-			if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
-				log.Fatal(err)
-			}
+			searchPager(query)
 		}
 	},
 }
@@ -65,24 +60,51 @@ func searchPager(param ...string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	selectedMovie := processSearch(selectedEngine, param...)
-	log.Debugf("Movie: %v\n", selectedMovie)
+	selectedMovie := processSearch(selectedEngine, compResult, param...)
+	log.Debug("Heyyyyy", len(selectedMovie.SDownloadLink))
+	//  log.Debugf("Movie: %v\n", selectedMovie)
 	// Start Movie Download
-	if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
-		log.Fatal(err)
+	if len(selectedMovie.SDownloadLink) < 1 {
+		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		var movieArray []engine.Movie
+		index := 0
+		for key, val := range selectedMovie.SDownloadLink {
+			movieArray = append(movieArray,
+				engine.Movie{
+					Index:          index,
+					Title:          key,
+					IsSeries:       false,
+					Source:         selectedMovie.Source,
+					DownloadLink:   val,
+					CoverPhotoLink: selectedMovie.CoverPhotoLink,
+					Description:    selectedMovie.Description,
+				})
+			index++
+		}
+		searchResult := engine.SearchResult{
+			Query:  selectedMovie.Title + "EPISODES",
+			Movies: movieArray,
+		}
+		selectedMovie = processSearch(selectedEngine, searchResult, param...)
+		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
-func processSearch(e engine.Engine, param ...string) engine.Movie {
+func processSearch(e engine.Engine, retrievedResult engine.SearchResult, param ...string) engine.Movie {
 	// Initialize process and show loader on terminal and store result in result
 	var choice string
 	var choiceIndex int
 	var result engine.SearchResult
+	var items []string
 	query := param[0]
 	if len(param) > 1 {
 		pageNum, _ = strconv.Atoi(param[1])
 		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(param...) })
-		var items []string
 		items = append(result.Titles(), []string{">>> Next Page"}...)
 		if pageNum != 1 {
 			items = append([]string{"<<< Previous Page"}, items...)
@@ -97,8 +119,17 @@ func processSearch(e engine.Engine, param ...string) engine.Movie {
 			searchPager(query, strconv.Itoa(pageNum+1))
 		}
 	} else {
-		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(query) })
-		_, choice = SelectOpts(result.Query, result.Titles())
+		if reflect.DeepEqual(retrievedResult, compResult) {
+			result = ProcessFetchTask(func() engine.SearchResult { return e.Search(query) })
+			_, choice = SelectOpts(result.Query, result.Titles())
+		} else {
+			result = retrievedResult
+			items = append([]string{"<<< MAIN PAGE"}, result.Titles()...)
+			choiceIndex, choice = SelectOpts(result.Query, items)
+			if choiceIndex == 0 {
+				searchPager(query, strconv.Itoa(pageNum))
+			}
+		}
 	}
 	selectedMovie, err := result.GetMovieByTitle(choice)
 	if err != nil {

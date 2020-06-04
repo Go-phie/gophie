@@ -48,9 +48,9 @@ example:
 		query := strings.Join(args, " ")
 		var movie engine.Movie
 		if query == "" {
-			movie = processList(1, selectedEngine)
+			movie = processList(1, selectedEngine, compResult)
 		} else {
-			movie = processSearch(selectedEngine, query, "1")
+			movie = processSearch(selectedEngine, compResult, query, "1")
 		}
 		p, err := mplayer.GetPlayer(selectedPlayer)
 		if err != nil {

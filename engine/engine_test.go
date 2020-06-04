@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-
 	// _ "github.com/go-phie/gophie/cmd"
 )
 
@@ -14,7 +13,11 @@ func testResults(t *testing.T, engine Engine) {
 	var searchTerm string
 	fmt.Println(engine.String())
 	if !strings.HasPrefix(engine.String(), "TvSeries") {
-		searchTerm = "jumanji"
+		if strings.HasPrefix(engine.String(), "Anime") {
+			searchTerm = "attack on titan"
+		} else {
+			searchTerm = "jumanji"
+		}
 	} else {
 		// search for the flash for movie series
 		searchTerm = "devs"
