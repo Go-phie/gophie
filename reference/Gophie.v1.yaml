@@ -348,6 +348,20 @@ components:
     Movie:
       title: Movie model
       type: object
+      x-examples:
+        example-1:
+          Index: 0
+          Title: All the Bright Places (2020)
+          CoverPhotoLink: 'https://img.netnaija.com/NGMHHK.jpg'
+          Description: ''
+          Size: (242.26MB)
+          DownloadLink: 'https://www.downloadbetter.com/RVMqXLxQs70/all-the-bright-places-2020-netnaija-com-mp4.html?d=1'
+          Year: 2020
+          IsSeries: false
+          SDownloadLink: null
+          UploadDate: ''
+          Source: NetNaija
+      description: Contains information concerning a movie
       properties:
         Index:
           type: integer
@@ -373,30 +387,14 @@ components:
         SDownloadLink:
           type:
             - 'null'
-            - array
+            - object
           description: If the movie is a series then this might contain links to the individual parts
-          items:
-            type: string
         UploadDate:
           type: string
           description: Date the movie was uploaded
         Source:
           type: string
           description: The engine the movie was retrieved from
-      x-examples:
-        example-1:
-          Index: 0
-          Title: All the Bright Places (2020)
-          CoverPhotoLink: 'https://img.netnaija.com/NGMHHK.jpg'
-          Description: ''
-          Size: (242.26MB)
-          DownloadLink: 'https://www.downloadbetter.com/RVMqXLxQs70/all-the-bright-places-2020-netnaija-com-mp4.html?d=1'
-          Year: 2020
-          IsSeries: false
-          SDownloadLink: null
-          UploadDate: ''
-          Source: NetNaija
-      description: Contains information concerning a movie
     Engine:
       title: Engine model
       type: object
