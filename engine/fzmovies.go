@@ -80,7 +80,6 @@ func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movi
 	if err != nil {
 		log.Fatal(err)
 	}
-	// download link is current link path + /download
 	downloadLink.Path = path.Join(engine.BaseURL.Path, downloadLink.Path)
 
 	movie.DownloadLink = downloadLink
@@ -103,6 +102,9 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 		if len(stringsub) > 0 {
 			dl := strings.TrimPrefix(stringsub[0], "(")
 			movie.Size = dl
+		}
+		if strings.HasSuffix(movie.Title, "Tags") {
+			movie.Title = strings.TrimSuffix(movie.Title, "Tags")
 		}
 		downloadCollector.Visit(downloadLink.String())
 	})
