@@ -47,9 +47,10 @@ func authIP(handler http.HandlerFunc) http.HandlerFunc {
 		originURL, _ := url.Parse(r.Header.Get("Origin"))
 		if err == nil && (contains(WhiteListedHosts, ip) || contains(WhiteListedHosts, "*") || contains(WhiteListedHosts, originURL.Host)) {
 			handler.ServeHTTP(w, r)
-		}
+		} else {
 		log.Debug("Rejecting Request: Host not whitelisted")
 		accessDeniedHandler(w, r)
+           }
 	}
 }
 
