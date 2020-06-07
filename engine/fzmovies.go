@@ -70,7 +70,9 @@ func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movi
 	}
 	movie.CoverPhotoLink = cover.String()
 	// Remove all Video: or Movie: Prefixes
-	movie.UploadDate = strings.TrimSpace(el.ChildTexts("small")[1])
+	if len(el.ChildTexts("small")) >= 2 {
+		movie.UploadDate = strings.TrimSpace(el.ChildTexts("small")[1])
+	}
 	movie.Title = strings.TrimSuffix(strings.TrimSpace(el.ChildText("b")), "<more>")
 	if len(el.ChildTexts("small")) > 3 {
 		movie.Description = strings.TrimSpace(el.ChildTexts("small")[3])
