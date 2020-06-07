@@ -45,12 +45,13 @@ func authIP(handler http.HandlerFunc) http.HandlerFunc {
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 
 		originURL, _ := url.Parse(r.Header.Get("Origin"))
-		if err == nil && (contains(WhiteListedHosts, ip) || contains(WhiteListedHosts, "*") || contains(WhiteListedHosts, originURL.Host)) {
+		refererURL, _ := url.Parse(r.Header.Get("Referer"))
+		if err == nil && (contains(WhiteListedHosts, ip) || contains(WhiteListedHosts, "*") || contains(WhiteListedHosts, originURL.Host) || contains(WhiteListedHosts, refererURL.Host)) {
 			handler.ServeHTTP(w, r)
 		} else {
-		log.Debug("Rejecting Request: Host not whitelisted")
-		accessDeniedHandler(w, r)
-           }
+			log.Debugf("Rejecting Request: Host %s/%s Not whitelisted", originURL.Host, refererURL.Host)
+			accessDeniedHandler(w, r)
+		}
 	}
 }
 
