@@ -182,7 +182,7 @@ func (m *Movie) String() string {
 
 // MarshalJSON Json structure to return from api
 func (m *Movie) MarshalJSON() ([]byte, error) {
-	var sDownloadLink map[string]string
+	sDownloadLink := make(map[string]string)
 	for key, val := range m.SDownloadLink {
 		sDownloadLink[key] = val.String()
 	}

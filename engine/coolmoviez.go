@@ -113,6 +113,11 @@ func (engine *CoolMoviez) updateDownloadProps(downloadCollector *colly.Collector
 	downloadCollector.OnHTML("a.fileName", func(e *colly.HTMLElement) {
 		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
 		initialLink := e.Attr("href")
+		re := regexp.MustCompile(`Size:\s+(.*)`)
+		stringsub := re.FindStringSubmatch(e.Text)
+		if len(stringsub) > 1 {
+			movie.Size = stringsub[1]
+		}
 
 		replacePrefix := "https://www.coolmoviez.buzz/file"
 		if strings.HasPrefix(initialLink, replacePrefix) {
