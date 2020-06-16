@@ -103,7 +103,7 @@ func (engine *MyCoolMoviez) updateDownloadProps(downloadCollector *colly.Collect
 				genre = strings.TrimSpace(strings.TrimPrefix(text, "Genre :"))
 			}
 		}
-		movie.Description = movie.Description + `\n` + genre
+		movie.Category = genre
 	})
 
 	downloadCollector.OnHTML("div.download", func(e *colly.HTMLElement) {

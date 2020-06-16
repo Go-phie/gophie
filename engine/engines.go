@@ -162,6 +162,9 @@ type Movie struct {
 	Year           int
 	IsSeries       bool
 	SDownloadLink  map[string]*url.URL // Other links for downloads if movies is series
+	Quality        string
+	Category       string // csv of categories
+	Cast           string // csv of actors in movie
 	UploadDate     string
 	Source         string // The Engine From which it is gotten from
 }
@@ -237,6 +240,7 @@ func GetEngines() map[string]Engine {
 	engines["besthdmovies"] = NewBestHDEngine()
 	engines["tvseries"] = NewTvSeriesEngine()
 	engines["mycoolmoviez"] = NewMyCoolMoviezEngine()
+	engines["coolmoviez"] = NewCoolMoviezEngine()
 	engines["animeout"] = NewAnimeOutEngine()
 	return engines
 }

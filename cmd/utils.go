@@ -38,7 +38,7 @@ func ProcessFetchTask(fn fetchFunc) engine.SearchResult {
 // SelectOpts : use promptui to select amongst options
 func SelectOpts(title string, options []string) (int, string) {
 	prompt := promptui.Select{
-		Label: "",
+		Label: title,
 		Items: options,
 		Size:  10,
 	}

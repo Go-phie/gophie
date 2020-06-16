@@ -118,7 +118,6 @@ func processList(pageNum int, e engine.Engine, retrievedResult engine.SearchResu
 			listPager(pageNum)
 		}
 	}
-
 	selectedMovie, err := result.GetMovieByTitle(choice)
 	if err != nil {
 		log.Fatal(err)

@@ -35,7 +35,7 @@ func testResults(t *testing.T, engine Engine) {
 			}
 			if movie.IsSeries == false {
 				downloadlink := movie.DownloadLink.String()
-				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=") || strings.Contains(downloadlink, "mycoolmoviez")) {
+				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=") || strings.Contains(downloadlink, "mycoolmoviez") || strings.Contains(downloadlink, "server")) {
 					t.Errorf("Could not obtain link for single movie, linked returned is %v", downloadlink)
 				}
 			}
@@ -46,7 +46,7 @@ func testResults(t *testing.T, engine Engine) {
 func TestEngines(t *testing.T) {
 	engines := GetEngines()
 	for _, engine := range engines {
-		if !strings.HasPrefix(engine.String(), "NetNaija") {
+		if !(strings.HasPrefix(engine.String(), "NetNaija") || strings.HasPrefix(engine.String(), "MyCoolMoviez")) {
 			testResults(t, engine)
 		}
 	}

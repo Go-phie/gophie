@@ -61,8 +61,6 @@ func searchPager(param ...string) {
 		log.Fatal(err)
 	}
 	selectedMovie := processSearch(selectedEngine, compResult, param...)
-	log.Debug("Heyyyyy", len(selectedMovie.SDownloadLink))
-	//  log.Debugf("Movie: %v\n", selectedMovie)
 	// Start Movie Download
 	if len(selectedMovie.SDownloadLink) < 1 {
 		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
