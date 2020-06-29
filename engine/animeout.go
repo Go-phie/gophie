@@ -62,6 +62,7 @@ func (engine *AnimeOut) parseSingleMovie(el *colly.HTMLElement, index int) (Movi
 		Index:    index,
 		IsSeries: true,
 		Source:   engine.Name,
+		Size:     "---MB",
 	}
 	movie.Title = strings.TrimSpace(el.ChildText("h3.post-title"))
 	movie.CoverPhotoLink = el.ChildAttr("img", "src")
@@ -90,6 +91,7 @@ func (engine *AnimeOut) updateDownloadProps(downloadCollector *colly.Collector, 
 			if (link != "#") && (link != "") {
 				_, filename := path.Split(link)
 				file := strings.TrimSuffix(filename, path.Ext(filename))
+				file, _ = url.QueryUnescape(file)
 				if strings.HasPrefix(link, "http://download.animeout.com/") {
 					link = strings.TrimPrefix(link, "http://download.animeout.com/")
 					link = "http://public.animeout.xyz/sv1.animeout.com/" + link
