@@ -24,7 +24,7 @@ matrix:
       env:
         - REPLACE="#!\/usr\/bin\/env\ node"
       script:
-        - npm i -g @stoplight/cli
+        - npm i -g @stoplight/cli@3.0.1
         - sed -i "1s/.*/$REPLACE/" $(npm config get prefix)/lib/node_modules/@stoplight/cli/bin/stoplight.js
       deploy:
         # deploy docs
