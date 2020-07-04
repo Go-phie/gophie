@@ -38,6 +38,7 @@ info:
     ### Anime
 
     - [AnimeOut](https://www.animeout.xyz)
+    - [TakanimeList] (https://takanimelist.best)
 servers:
   - url: 'https://deploy-gophie.herokuapp.com'
     description: Heroku server

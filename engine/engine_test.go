@@ -13,7 +13,7 @@ func testResults(t *testing.T, engine Engine) {
 	var searchTerm string
 	fmt.Println(engine.String())
 	if !strings.HasPrefix(engine.String(), "TvSeries") {
-		if strings.HasPrefix(engine.String(), "Anime") {
+		if strings.HasPrefix(engine.String(), "Anime") || strings.HasPrefix(engine.String(), "Takanime") {
 			searchTerm = "attack on titan"
 		} else {
 			searchTerm = "jumanji"
@@ -29,12 +29,14 @@ func testResults(t *testing.T, engine Engine) {
 	} else {
 		for _, movie := range result.Movies {
 			if _, ok := counter[movie.DownloadLink.String()]; ok {
-				t.Errorf("Duplicated Link")
+				if !movie.IsSeries {
+					t.Errorf("Duplicated Link %s", movie.DownloadLink.String())
+				}
 			} else {
 				counter[movie.DownloadLink.String()] = 1
 			}
 			if movie.IsSeries == false {
-				downloadlink := movie.DownloadLink.String()
+				downloadlink := strings.ToLower(movie.DownloadLink.String())
 				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=") || strings.Contains(downloadlink, "mycoolmoviez") || strings.Contains(downloadlink, "server")) {
 					t.Errorf("Could not obtain link for single movie, linked returned is %v", downloadlink)
 				}
