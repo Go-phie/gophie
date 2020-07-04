@@ -69,6 +69,7 @@ func (engine *CoolMoviez) parseSingleMovie(el *colly.HTMLElement, index int) (Mo
 	if strings.HasSuffix(movie.Title, appendage) {
 		movie.Title = strings.TrimSuffix(movie.Title, appendage)
 	}
+	movie.Title = strings.TrimSuffix(movie.Title, "\n")
 	re := regexp.MustCompile(`(\d+)`)
 	stringsub := re.FindStringSubmatch(movie.Title)
 	if len(stringsub) > 0 {

@@ -43,6 +43,7 @@ func SelectOpts(title string, options []string) (int, string) {
 		Size:  10,
 	}
 
+	log.Debug(prompt)
 	index, result, err := prompt.Run()
 	if err != nil {
 		log.Fatalf("Prompt failed %v\n", err)
