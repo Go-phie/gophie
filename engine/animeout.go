@@ -100,12 +100,14 @@ func (engine *AnimeOut) updateDownloadProps(downloadCollector *colly.Collector, 
 					link = strings.TrimPrefix(link, "https://")
 					link = "http://public.animeout.xyz/" + link
 				}
-				downloadlink, _ := url.Parse(link)
-				if !strings.HasPrefix(file, "#") {
-					episodeMap[file] = downloadlink
-				}
-				if index == 0 {
-					movie.DownloadLink = downloadlink
+				if path.Ext(filename) == ".mkv" || path.Ext(filename) == ".mp4" {
+					downloadlink, _ := url.Parse(link)
+					if !strings.HasPrefix(file, "#") {
+						episodeMap[file] = downloadlink
+					}
+					if index == 0 {
+						movie.DownloadLink = downloadlink
+					}
 				}
 			}
 			index++
