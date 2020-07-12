@@ -55,10 +55,10 @@ type Engine interface {
 // Scrape : Parse queries a url and return results
 func Scrape(engine Engine) ([]Movie, error) {
 	// Config Vars
-	seleniumURL := fmt.Sprintf("%s/wd/hub", viper.GetString("selenium-url"))
+	//  seleniumURL := fmt.Sprintf("%s/wd/hub", viper.GetString("selenium-url"))
 	cacheDir := viper.GetString("cache-dir")
 	var (
-		t   *transport.Transport
+		t   *transport.ChromeDpTransport
 		err error
 	)
 
@@ -70,8 +70,8 @@ func Scrape(engine Engine) ([]Movie, error) {
 
 	// Add Cloud Flare scraper bypasser
 	if engine.getName() == "NetNaija" {
-		log.Debug("Switching to Selenium transport")
-		t, err = transport.NewSeleniumTransport(http.DefaultTransport, seleniumURL)
+		log.Debug("Switching to ChromeDpTransport")
+		t, err = transport.NewChromeDpTransport(http.DefaultTransport)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -81,7 +81,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// Close the WebDriver Instance
 	defer func() {
 		if engine.getName() == "NetNaija" {
-			t.WebDriver.Quit()
+			t.Cancel()
 		}
 	}()
 

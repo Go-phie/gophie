@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/bisoncorps/mplayer v0.0.0-20200330192254-e2f647162350
 	github.com/briandowns/spinner v1.11.1
+	github.com/chromedp/chromedp v0.5.3
 	github.com/gocolly/colly v1.2.0
 	github.com/gocolly/colly/v2 v2.0.2-0.20200302170631-ef2d2b016e78
 	github.com/iawia002/annie v0.0.0-20200217104547-c4b096ad402a
