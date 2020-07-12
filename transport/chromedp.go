@@ -3,8 +3,12 @@ package transport
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/chromedp/chromedp"
 	log "github.com/sirupsen/logrus"
@@ -12,23 +16,43 @@ import (
 
 // ChromeDpTransport : structure for chromedp instance
 type ChromeDpTransport struct {
-	upstream http.RoundTripper
-	Ctx      context.Context
-	Cancel   context.CancelFunc
+	upstream          http.RoundTripper
+	Ctx               context.Context
+	Cancel            context.CancelFunc
+	RemoteAllocCancel context.CancelFunc
+}
+
+func getDebugURL() string {
+	remoteUrl := fmt.Sprintf("%s/json/version", os.Getenv("GOPHIE_CHROMEDP_URL"))
+	resp, err := http.Get(remoteUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var result map[string]interface{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Fatal(err)
+	}
+	return result["webSocketDebuggerUrl"].(string)
 }
 
 // NewChromeDpTransport : initialize a new transport
 func NewChromeDpTransport(upstream http.RoundTripper) (*ChromeDpTransport, error) {
 
+	devToolWsUrl := getDebugURL()
+	// create allocator context for use with creating a browser context later
+	allocatorContext, allocCancel := chromedp.NewRemoteAllocator(context.Background(), devToolWsUrl)
+
 	ctx, cancel := chromedp.NewContext(
-		context.Background(),
-		chromedp.WithLogf(log.Debugf),
+		allocatorContext,
 	)
 
 	return &ChromeDpTransport{
-		upstream: upstream,
-		Ctx:      ctx,
-		Cancel:   cancel,
+		upstream:          upstream,
+		Ctx:               ctx,
+		Cancel:            cancel,
+		RemoteAllocCancel: allocCancel,
 	}, nil
 }
 
@@ -38,6 +62,7 @@ func (t *ChromeDpTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		body string
 		err  error
 	)
+	defer t.RemoteAllocCancel()
 
 	if r.Header.Get("User-Agent") == "" {
 		r.Header.Set("User-Agent", userAgent)
@@ -51,12 +76,36 @@ func (t *ChromeDpTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 	log.Debug("Set Headers for page ", r.URL.String())
 
-	if err = chromedp.Run(t.Ctx,
-		chromedp.Navigate(r.URL.String()),
-		//    chromedp.WaitVisible(`#nnj-body`),
-		chromedp.OuterHTML("html", &body),
-	); err != nil {
+	// Check if CloudFlare blocker exists
+	resp, err := http.Get(r.URL.String())
+	if err != nil {
 		return &http.Response{}, err
+	}
+
+	resp.Header.Set("Content-Type", "text/html")
+
+	defer resp.Body.Close()
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return &http.Response{}, err
+	}
+	body = string(respBody)
+
+	r.Header.Set("Content-Type", "text/html")
+
+	log.Debug("Set Headers for page ", r.URL.String())
+
+	if !strings.Contains(strings.ToLower(string(respBody)), "wait a moment") {
+		log.Debug("Using ChromeDP driver")
+		if err = chromedp.Run(t.Ctx,
+			chromedp.Navigate(r.URL.String()),
+			chromedp.WaitVisible(`#nnj-body`),
+			chromedp.OuterHTML("html", &body),
+		); err != nil {
+			log.Fatal(err)
+			return &http.Response{}, err
+		}
 	}
 	log.Debug("Successfully retrieved body")
 

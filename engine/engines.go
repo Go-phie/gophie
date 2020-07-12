@@ -81,6 +81,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// Close the WebDriver Instance
 	defer func() {
 		if engine.getName() == "NetNaija" {
+			t.RemoteAllocCancel()
 			t.Cancel()
 		}
 	}()
