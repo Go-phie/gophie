@@ -44,17 +44,17 @@ func getDebugURL() string {
 // NewChromeDpTransport : initialize a new transport
 func NewChromeDpTransport(upstream http.RoundTripper) (*ChromeDpTransport, error) {
 
-	devToolWsUrl := getDebugURL()
-	// create allocator context for use with creating a browser context later
-	allocatorContext, cancel := chromedp.NewRemoteAllocator(context.Background(), devToolWsUrl)
-	baseCtx, cancel = chromedp.NewContext(
-		allocatorContext,
-	)
-	// for local exec
-	//  baseCtx, cancel := chromedp.NewContext(
-	//    context.Background(),
-	//    chromedp.WithLogf(log.Debugf),
+	//  devToolWsUrl := getDebugURL()
+	//  // create allocator context for use with creating a browser context later
+	//  allocatorContext, cancel := chromedp.NewRemoteAllocator(context.Background(), devToolWsUrl)
+	//  baseCtx, cancel = chromedp.NewContext(
+	//    allocatorContext,
 	//  )
+	// for local exec
+	baseCtx, cancel := chromedp.NewContext(
+		context.Background(),
+		chromedp.WithLogf(log.Debugf),
+	)
 
 	// start the browser without a timeout
 	if err := chromedp.Run(baseCtx); err != nil {

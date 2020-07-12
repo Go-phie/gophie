@@ -48,7 +48,7 @@ func testResults(t *testing.T, engine Engine) {
 func TestEngines(t *testing.T) {
 	engines := GetEngines()
 	for _, engine := range engines {
-		if !(strings.HasPrefix(engine.String(), "NetNaija") || strings.HasPrefix(engine.String(), "MyCoolMoviez")) {
+		if !(strings.HasPrefix(engine.String(), "MyCoolMoviez")) {
 			testResults(t, engine)
 		}
 	}
