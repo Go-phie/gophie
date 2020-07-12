@@ -22,6 +22,10 @@ type ChromeDpTransport struct {
 	RemoteAllocCancel context.CancelFunc
 }
 
+var (
+	baseCtx context.Context
+)
+
 func getDebugURL() string {
 	remoteUrl := fmt.Sprintf("%s/json/version", os.Getenv("GOPHIE_CHROMEDP_URL"))
 	resp, err := http.Get(remoteUrl)
@@ -42,18 +46,35 @@ func NewChromeDpTransport(upstream http.RoundTripper) (*ChromeDpTransport, error
 
 	devToolWsUrl := getDebugURL()
 	// create allocator context for use with creating a browser context later
-	allocatorContext, allocCancel := chromedp.NewRemoteAllocator(context.Background(), devToolWsUrl)
-
-	ctx, cancel := chromedp.NewContext(
+	allocatorContext, cancel := chromedp.NewRemoteAllocator(context.Background(), devToolWsUrl)
+	baseCtx, cancel = chromedp.NewContext(
 		allocatorContext,
 	)
+	// for local exec
+	//  baseCtx, cancel := chromedp.NewContext(
+	//    context.Background(),
+	//    chromedp.WithLogf(log.Debugf),
+	//  )
 
+	// start the browser without a timeout
+	if err := chromedp.Run(baseCtx); err != nil {
+		panic(err)
+	}
 	return &ChromeDpTransport{
 		upstream:          upstream,
-		Ctx:               ctx,
+		Ctx:               baseCtx,
 		Cancel:            cancel,
-		RemoteAllocCancel: allocCancel,
+		RemoteAllocCancel: cancel,
 	}, nil
+}
+
+type LogAction struct {
+	Message string
+}
+
+func (a LogAction) Do(ctx context.Context) error {
+	log.Debug(a.Message)
+	return nil
 }
 
 // RoundTrip: extends the RoundTrip API for usage as a colly transport
@@ -62,7 +83,6 @@ func (t *ChromeDpTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		body string
 		err  error
 	)
-	defer t.RemoteAllocCancel()
 
 	if r.Header.Get("User-Agent") == "" {
 		r.Header.Set("User-Agent", userAgent)
@@ -96,11 +116,15 @@ func (t *ChromeDpTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 	log.Debug("Set Headers for page ", r.URL.String())
 
-	if !strings.Contains(strings.ToLower(string(respBody)), "wait a moment") {
+	if strings.Contains(strings.ToLower(string(respBody)), "wait a moment") {
 		log.Debug("Using ChromeDP driver")
-		if err = chromedp.Run(t.Ctx,
+		// reuse baseCtx to create new context to reuse browser
+		ctx, cancel := chromedp.NewContext(baseCtx)
+		defer cancel()
+		if err = chromedp.Run(ctx,
 			chromedp.Navigate(r.URL.String()),
-			chromedp.WaitVisible(`#nnj-body`),
+			LogAction{Message: "Finished navigation"},
+			chromedp.WaitVisible(`#nnj-body, #top`),
 			chromedp.OuterHTML("html", &body),
 		); err != nil {
 			log.Fatal(err)
