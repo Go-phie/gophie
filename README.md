@@ -42,7 +42,7 @@ Gophie also has [mobile](https://github.com/Go-phie/gophie-mobile) and [web](htt
 With Golang installed
 
 ```bash
-go get github.com/go-phie/gophie
+go get -u github.com/go-phie/gophie
 ```
 Or download from Github [Releases](https://github.com/go-phie/gophie/releases)
 
