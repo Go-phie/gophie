@@ -86,6 +86,14 @@ For Development use `go run main.go [command]`
 
 ## Deployment
 
+### Tagging
+
+To create a new tag, use the make file
+
+```bash
+make upgrade version=0.x.x
+```
+
 The deployed API version from `gophie api` is available on [Heroku](https://deploy-gophie.herokuapp.com). Please read the API documentation for usage
 
 ## License

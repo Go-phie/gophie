@@ -21,9 +21,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version : Version of Gophie
-const Version = "0.3.6"
-
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
