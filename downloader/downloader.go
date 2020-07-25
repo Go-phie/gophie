@@ -6,8 +6,8 @@ import (
 	"path"
 
 	"github.com/go-phie/gophie/engine"
-	"github.com/iawia002/annie/config"
 	"github.com/iawia002/annie/downloader"
+	"github.com/iawia002/annie/extractors/types"
 	"github.com/iawia002/annie/request"
 	"github.com/iawia002/annie/utils"
 	log "github.com/sirupsen/logrus"
@@ -15,25 +15,25 @@ import (
 )
 
 // Extract is the main function for extracting data before passing to Annie
-func Extract(url, source string) ([]downloader.Data, error) {
+func Extract(url, source string) ([]*types.Data, error) {
 
 	filename, ext, err := utils.GetNameAndExt(url)
 	if err != nil {
 		return nil, err
 	}
 	size, err := request.Size(url, url)
-	log.Debug(size)
 	if err != nil {
 		return nil, err
 	}
-	urlData := downloader.URL{
-		URL:  url,
-		Size: size,
-		Ext:  ext,
-	}
-	streams := map[string]downloader.Stream{
+	streams := map[string]*types.Stream{
 		"default": {
-			URLs: []downloader.URL{urlData},
+			Parts: []*types.Part{
+				{
+					URL:  url,
+					Size: size,
+					Ext:  ext,
+				},
+			},
 			Size: size,
 		},
 	}
@@ -42,11 +42,11 @@ func Extract(url, source string) ([]downloader.Data, error) {
 		return nil, err
 	}
 
-	return []downloader.Data{
+	return []*types.Data{
 		{
 			Site:    source,
 			Title:   filename,
-			Type:    contentType,
+			Type:    types.DataType(contentType),
 			Streams: streams,
 			URL:     url,
 		},
@@ -69,7 +69,7 @@ type Downloader struct {
 func (f *Downloader) DownloadFile() error {
 	var (
 		err  error
-		data []downloader.Data
+		data []*types.Data
 	)
 
 	// Extract data to be downloaded with the streams
@@ -90,14 +90,17 @@ func (f *Downloader) DownloadFile() error {
 		}
 	}
 
-	config.OutputPath = f.Dir
 	for _, item := range data {
 		if item.Err != nil {
 			// if this error occurs, the preparation step is normal, but the data extraction is wrong.
 			// the data is an empty struct.
 			return item.Err
 		}
-		err = downloader.Download(item, f.URL, config.ChunkSizeMB)
+		movieDownloader := downloader.New(downloader.Options{
+			OutputPath: f.Dir,
+			Stream:     "default",
+		})
+		err = movieDownloader.Download(item)
 		if err != nil {
 			return err
 		}
