@@ -18,7 +18,11 @@ matrix:
         - provider: heroku
           api_key: $HEROKU_PRODUCTION_API_KEY
           app: $HEROKU_APP_NAME
-        
+
+      after_deploy:
+        - go get -u github.com/go-phie/gophie
+        - gophie version
+
     - language: node_js
       node_js: 10
       env:
@@ -31,7 +35,7 @@ matrix:
         - provider: script
           skip_cleanup: true
           script: $(npm config get prefix)/bin/stoplight publish --token $STOPLIGHT_TOKEN --url https://stoplight.io/api
-        
+
 
 notifications:
   email: false

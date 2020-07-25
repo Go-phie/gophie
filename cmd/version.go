@@ -22,7 +22,7 @@ import (
 )
 
 // Version : Version of Gophie
-const Version = "0.0.1"
+const Version = "0.3.6"
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
