@@ -244,6 +244,7 @@ func GetEngines() map[string]Engine {
 	engines["coolmoviez"] = NewCoolMoviezEngine()
 	engines["animeout"] = NewAnimeOutEngine()
 	engines["takanimelist"] = NewTakanimeListEngine()
+	engines["dramacool"] = NewDramaCoolEngine()
 	return engines
 }
 
