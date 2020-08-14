@@ -36,6 +36,10 @@ Gophie is a tool to help you search, stream and download movies from movie sites
 - AnimeOut
 - Takanimelist
 
+### Korean
+
+- KDramaHood
+
 Gophie also has [mobile](https://github.com/Go-phie/gophie-mobile) and [web](https://github.com/Go-phie/gophie-web) clients.
 
 ## Installation

@@ -100,6 +100,10 @@ func Scrape(engine Engine) ([]Movie, error) {
 		log.Fatal(err)
 	}
 
+	//  c.OnHTML("div", func(e *colly.HTMLElement) {
+	//    log.Debugf("%#v", e)
+	//  })
+
 	c.OnHTML(main, func(e *colly.HTMLElement) {
 		e.ForEach(article, func(_ int, el *colly.HTMLElement) {
 			movie, err := engine.parseSingleMovie(el, movieIndex)
@@ -167,7 +171,9 @@ type Movie struct {
 	Category       string // csv of categories
 	Cast           string // csv of actors in movie
 	UploadDate     string
-	Source         string // The Engine From which it is gotten from
+	Source         string              // The Engine From which it is gotten from
+	SubtitleLink   *url.URL            // single subtitle link
+	SubtitleLinks  map[string]*url.URL // Subtitle links for a series
 }
 
 // MovieJSON : JSON structure of all downloadable movies
@@ -175,6 +181,7 @@ type MovieJSON struct {
 	Movie
 	DownloadLink  string
 	SDownloadLink map[string]string
+	subLinks      map[string]string
 }
 
 func (m *Movie) String() string {
@@ -187,11 +194,16 @@ func (m *Movie) MarshalJSON() ([]byte, error) {
 	for key, val := range m.SDownloadLink {
 		sDownloadLink[key] = val.String()
 	}
+	subtitleLinks := make(map[string]string)
+	for key, val := range m.SubtitleLinks {
+		subtitleLinks[key] = val.String()
+	}
 
 	movie := MovieJSON{
 		Movie:         *m,
 		DownloadLink:  m.DownloadLink.String(),
 		SDownloadLink: sDownloadLink,
+		subLinks:      subtitleLinks,
 	}
 
 	return json.Marshal(movie)
@@ -244,7 +256,7 @@ func GetEngines() map[string]Engine {
 	engines["coolmoviez"] = NewCoolMoviezEngine()
 	engines["animeout"] = NewAnimeOutEngine()
 	engines["takanimelist"] = NewTakanimeListEngine()
-	engines["dramacool"] = NewDramaCoolEngine()
+	engines["kdramahood"] = NewKDramaHoodEngine()
 	return engines
 }
 

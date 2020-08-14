@@ -61,7 +61,7 @@ func listPager(pageNum int) {
 			index++
 		}
 		searchResult := engine.SearchResult{
-			Query:  selectedMovie.Title + "EPISODES",
+			Query:  selectedMovie.Title + " EPISODES",
 			Movies: movieArray,
 		}
 		selectedMovie = processList(pageNum, selectedEngine, searchResult)
