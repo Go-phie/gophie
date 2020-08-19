@@ -181,7 +181,7 @@ type MovieJSON struct {
 	Movie
 	DownloadLink  string
 	SDownloadLink map[string]string
-	subLinks      map[string]string
+	SubtitleLinks map[string]string
 }
 
 func (m *Movie) String() string {
@@ -203,7 +203,7 @@ func (m *Movie) MarshalJSON() ([]byte, error) {
 		Movie:         *m,
 		DownloadLink:  m.DownloadLink.String(),
 		SDownloadLink: sDownloadLink,
-		subLinks:      subtitleLinks,
+		SubtitleLinks: subtitleLinks,
 	}
 
 	return json.Marshal(movie)
