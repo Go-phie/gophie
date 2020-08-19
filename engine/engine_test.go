@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	// _ "github.com/go-phie/gophie/cmd"
 )
 
 func testResults(t *testing.T, engine Engine) {
@@ -12,15 +11,17 @@ func testResults(t *testing.T, engine Engine) {
 	var result SearchResult
 	var searchTerm string
 	fmt.Println(engine.String())
-	if !strings.HasPrefix(engine.String(), "TvSeries") {
-		if strings.HasPrefix(engine.String(), "Anime") || strings.HasPrefix(engine.String(), "Takanime") {
-			searchTerm = "attack on titan"
-		} else {
-			searchTerm = "jumanji"
-		}
-	} else {
-		// search for the flash for movie series
+	// different search terms on engines
+	switch {
+	case strings.HasPrefix(engine.String(), "TvSeries"):
 		searchTerm = "devs"
+	case strings.HasPrefix(engine.String(), "TakanimeList"),
+		strings.HasPrefix(engine.String(), "AnimeOut"):
+		searchTerm = "attack on titans"
+	case strings.HasPrefix(engine.String(), "KDramaHood"):
+		searchTerm = "flower of evil"
+	default:
+		searchTerm = "jumanji"
 	}
 	result = engine.Search(searchTerm)
 
@@ -37,7 +38,7 @@ func testResults(t *testing.T, engine Engine) {
 			}
 			if movie.IsSeries == false {
 				downloadlink := strings.ToLower(movie.DownloadLink.String())
-				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=") || strings.Contains(downloadlink, "mycoolmoviez") || strings.Contains(downloadlink, "server")) {
+				if !(strings.HasSuffix(downloadlink, "1") || strings.HasSuffix(downloadlink, ".mp4") || strings.Contains(downloadlink, ".mkv") || strings.Contains(downloadlink, ".avi") || strings.Contains(downloadlink, ".webm") || strings.Contains(downloadlink, "freeload") || strings.Contains(downloadlink, "download_token=") || strings.Contains(downloadlink, "mycoolmoviez") || strings.Contains(downloadlink, "server") || strings.Contains(downloadlink, "kdramahood")) {
 					t.Errorf("Could not obtain link for single movie, linked returned is %v", downloadlink)
 				}
 			}

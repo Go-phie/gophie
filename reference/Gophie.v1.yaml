@@ -39,6 +39,10 @@ info:
 
     - [AnimeOut](https://www.animeout.xyz)
     - [TakanimeList] (https://takanimelist.best)
+
+    ### Korean
+    
+    - [KDramaHood](https://kdramahood.com)
 servers:
   - url: 'https://deploy-gophie.herokuapp.com'
     description: Heroku server

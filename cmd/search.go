@@ -83,7 +83,7 @@ func searchPager(param ...string) {
 			index++
 		}
 		searchResult := engine.SearchResult{
-			Query:  selectedMovie.Title + "EPISODES",
+			Query:  selectedMovie.Title + " EPISODES",
 			Movies: movieArray,
 		}
 		selectedMovie = processSearch(selectedEngine, searchResult, param...)
