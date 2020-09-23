@@ -19,7 +19,7 @@ type TakanimeList struct {
 
 // NewTakanimeListEngine : create a new engine for scraping latest anime from chia-anime
 func NewTakanimeListEngine() *TakanimeList {
-	base := "https://takanimelist.best"
+	base := "https://takanimelist.live"
 	baseURL, err := url.Parse(base)
 	if err != nil {
 		log.Fatal(err)
