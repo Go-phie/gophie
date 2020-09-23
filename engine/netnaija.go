@@ -145,7 +145,31 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 		movie := &((*movies)[movieIndex])
 		description := e.ChildText("p")
 		if description != "" {
-			movie.Description = description
+			extraRe := regexp.MustCompile(`Genre: `)
+			descAndOthers := extraRe.Split(description, -1)
+
+			if len(descAndOthers) > 0 {
+				movie.Description = descAndOthers[0]
+			}
+
+			if len(descAndOthers) > 1 {
+				others := descAndOthers[1]
+				categoryRe := regexp.MustCompile(`^(.*)Release Date:`)
+				starsRe := regexp.MustCompile(`Stars:(.*)Source:`)
+				imdbRe := regexp.MustCompile(`.*(https:\/\/www\.imdb.*)`)
+				categories := categoryRe.FindStringSubmatch(others)
+				stars := starsRe.FindStringSubmatch(others)
+				imdb := imdbRe.FindStringSubmatch(others)
+				if len(categories) > 1 {
+					movie.Category = categories[1]
+				}
+				if len(stars) > 1 {
+					movie.Cast = stars[1]
+				}
+				if len(imdb) > 1 {
+					movie.ImdbLink = imdb[1]
+				}
+			}
 		}
 		if !(strings.HasSuffix(movie.DownloadLink.String(), "/download") || strings.HasSuffix(movie.DownloadLink.String(), "?d=1")) {
 			downloadLink, err := url.Parse(path.Join(movie.DownloadLink.String(), "download"))

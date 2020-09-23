@@ -174,6 +174,8 @@ type Movie struct {
 	Source         string              // The Engine From which it is gotten from
 	SubtitleLink   *url.URL            // single subtitle link
 	SubtitleLinks  map[string]*url.URL // Subtitle links for a series
+	ImdbLink       string              // imdb link if available
+	Tags           string              // csv of words that are linked to the movie if available
 }
 
 // MovieJSON : JSON structure of all downloadable movies
