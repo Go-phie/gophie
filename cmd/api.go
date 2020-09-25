@@ -25,14 +25,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-phie/gophie/engine"
+	"github.com/gorilla/handlers"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/go-phie/gophie/engine"
 )
 
 var (
 	port string
-	// WhiteListedHosts a list of hosts that can access api
+	// WhiteListedHosts Array of IPs and Hosts allowed to access the server
 	WhiteListedHosts []string
 )
 
@@ -40,16 +42,40 @@ func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
-func authIP(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+// extractToken : Get Token from Request
+func extractToken(r *http.Request) string {
+	bearToken := r.Header.Get("Authorization")
+	//normally Authorization the_token_xxx
+	strArr := strings.Split(bearToken, " ")
+	if len(strArr) == 2 {
+		return strArr[1]
+	}
+	return ""
+}
 
-		originURL, _ := url.Parse(r.Header.Get("Origin"))
-		refererURL, _ := url.Parse(r.Header.Get("Referer"))
-		if err == nil && (contains(WhiteListedHosts, ip) || contains(WhiteListedHosts, "*") || contains(WhiteListedHosts, originURL.Host) || contains(WhiteListedHosts, refererURL.Host)) {
+func isValidRemote(r *http.Request) bool {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if os.Getenv("WHITE_LISTED_HOSTS") != "" {
+		WhiteListedHosts = strings.Split(os.Getenv("WHITE_LISTED_HOSTS"), ",")
+	}
+
+	originURL, _ := url.Parse(r.Header.Get("Origin"))
+	refererURL, _ := url.Parse(r.Header.Get("Referer"))
+
+	return (err == nil && (contains(WhiteListedHosts, ip)) ||
+		(originURL.Host != "" && contains(WhiteListedHosts, originURL.Host)) ||
+		refererURL.Host != "" && contains(WhiteListedHosts, refererURL.Host))
+}
+
+func authenticateRequest(handler http.HandlerFunc) http.HandlerFunc {
+	accessToken := os.Getenv("ACCESS_SECRET")
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestToken := extractToken(r)
+		// It's Either you have accessToken set
+		// Or you don't have it set but have remoteURL config set
+		if isValidRemote(r) || requestToken == accessToken {
 			handler.ServeHTTP(w, r)
 		} else {
-			log.Debugf("Rejecting Request: Host %s/%s Not whitelisted", originURL.Host, refererURL.Host)
 			accessDeniedHandler(w, r)
 		}
 	}
@@ -88,22 +114,32 @@ func DocHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.Execute(w, "None"); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
 // ListHandler : handles List Requests
 func ListHandler(w http.ResponseWriter, r *http.Request) {
+	var (
+		pageNum int
+		err     error
+	)
 	eng := r.URL.Query().Get("engine")
 	site, err := engine.GetEngine(eng)
 	if site == nil {
 		http.Error(w, "Invalid Engine Param", http.StatusBadRequest)
+		return
 	}
-	pageNum, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		http.Error(w, "Page must be a number", http.StatusBadRequest)
+	if r.URL.Query().Get("page") == "" {
+		pageNum = 1
+	} else {
+		pageNum, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			http.Error(w, "Page must be a number", http.StatusBadRequest)
+			return
+		}
 	}
 
-	log.Debug("listing page ", pageNum)
 	result := site.List(pageNum)
 	b, err := json.Marshal(result.Movies)
 	if err != nil {
@@ -112,38 +148,38 @@ func ListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(b)
-	log.Debug("Completed query for ", pageNum)
 }
 
 // SearchHandler : handles search requests
 func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	var (
-		result engine.SearchResult
-		site   engine.Engine
+		result  engine.SearchResult
+		site    engine.Engine
+		err     error
+		pageNum int
 	)
 	query := r.URL.Query().Get("query")
 	if query == "" {
 		http.Error(w, "Query param must be added to url", http.StatusBadRequest)
+		return
 	}
 
-	page := r.URL.Query().Get("page")
-	if page == "" {
-		page = "1"
+	if r.URL.Query().Get("page") == "" {
+		pageNum = 1
+	} else {
+		pageNum, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			http.Error(w, "Page must be a number", http.StatusBadRequest)
+			return
+		}
 	}
 
-	pageNum, eRR := strconv.Atoi(page)
-	if eRR != nil {
-		http.Error(w, "Page must be a number", http.StatusBadRequest)
-	}
-
-	eng := r.URL.Query().Get("engine")
-	site, err := engine.GetEngine(eng)
+	site, err = engine.GetEngine(r.URL.Query().Get("engine"))
 	if err != nil {
 		http.Error(w, "Invalid Engine Param", http.StatusBadRequest)
+		return
 	}
-	log.Debug("Using Engine ", site)
-	log.Debug("Searching for ", query)
-	log.Debug("Returning search for page")
+	log.Infof("Processing search Request for engine=%s and query=%s", site, query)
 	result = site.Search(query, strconv.Itoa(pageNum))
 
 	// dump results
@@ -151,6 +187,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error("failed to serialize response: ", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 	w.Write(b)
 	log.Debug("Completed search for ", query)
@@ -169,17 +206,20 @@ func EngineHandler(w http.ResponseWriter, r *http.Request) {
 		site, err := engine.GetEngine(eng)
 		if err != nil {
 			http.Error(w, "Invalid Engine Param", http.StatusBadRequest)
+			return
 		}
 		response, err = json.Marshal(site)
 		if err != nil {
 			log.Error("failed to serialize response: ", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
 	} else {
 		response, err = json.Marshal(engine.GetEngines())
 		if err != nil {
 			log.Error("failed to serialize response: ", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
 	}
 	w.Write(response)
@@ -191,24 +231,23 @@ var apiCmd = &cobra.Command{
 	Short: "host gophie as an API on a PORT env variable, fallback to set argument",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		http.HandleFunc("/search", authIP(getDefaultsMiddleware(SearchHandler)))
-		http.HandleFunc("/list", authIP(getDefaultsMiddleware(ListHandler)))
-		http.HandleFunc("/engine", EngineHandler)
-		http.HandleFunc("/", DocHandler)
+		r := http.NewServeMux()
+		r.HandleFunc("/search", authenticateRequest(getDefaultsMiddleware(SearchHandler)))
+		r.HandleFunc("/list", authenticateRequest(getDefaultsMiddleware(ListHandler)))
+		r.HandleFunc("/engine", EngineHandler)
+		r.HandleFunc("/", DocHandler)
 
 		log.Info("listening on ", port)
 		_, err := strconv.Atoi(port)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Fatal(http.ListenAndServe(":"+port, nil))
+		loggedRouter := handlers.LoggingHandler(os.Stdout, r)
+		log.Fatal(http.ListenAndServe(":"+port, loggedRouter))
 	},
 }
 
 func init() {
-	if os.Getenv("WHITE_LISTED_HOSTS") != "" {
-		WhiteListedHosts = strings.Split(os.Getenv("WHITE_LISTED_HOSTS"), ",")
-	}
 	apiCmd.Flags().StringVarP(&port, "port", "p", "3000", "Port to run application server on")
 	rootCmd.AddCommand(apiCmd)
 }

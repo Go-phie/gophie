@@ -7,6 +7,7 @@ require (
 	github.com/briandowns/spinner v1.11.1
 	github.com/chromedp/chromedp v0.5.3
 	github.com/gocolly/colly/v2 v2.1.0
+	github.com/gorilla/handlers v1.5.1
 	github.com/iawia002/annie v0.0.0-20200720035628-03c160f28b4b
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mitchellh/go-homedir v1.1.0

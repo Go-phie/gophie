@@ -1,1 +1,1 @@
-web: ./bin/gophie api --verbose -p $PORT
+web: ./bin/gophie api -p $PORT
