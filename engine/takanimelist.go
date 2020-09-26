@@ -124,7 +124,9 @@ func (engine *TakanimeList) updateDownloadProps(downloadCollector *colly.Collect
 			movie.DownloadLink, _ = url.Parse(linkArray[i])
 			finalLink := retrieveSingle(internaldownloadCollector, linkArray[i])
 			downloadLink, _ := url.Parse(finalLink)
-			episodeMap[titleArray[i]] = downloadLink
+			if strconv.Itoa(i) != "" && downloadLink.String() != "" {
+				episodeMap[titleArray[i]] = downloadLink
+			}
 		}
 		movie.SDownloadLink = episodeMap
 	})
