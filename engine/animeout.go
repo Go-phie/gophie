@@ -85,7 +85,10 @@ func (engine *AnimeOut) updateDownloadProps(downloadCollector *colly.Collector, 
 				description = e.ChildTexts("p")[1]
 			}
 		}
-		episodeLinks := e.ChildAttrs("a", "href")[1:]
+		episodeLinks := e.ChildAttrs("a", "href")
+		if len(episodeLinks) > 1 {
+			episodeLinks = episodeLinks[1:]
+		}
 		index := 0
 		for _, link := range episodeLinks {
 			if (link != "#") && (link != "") {
