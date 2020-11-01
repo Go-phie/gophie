@@ -117,7 +117,13 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 		stringsub := re.FindStringSubmatch(e.ChildText("dcounter"))
 		if len(stringsub) > 0 {
 			dl := strings.TrimPrefix(stringsub[0], "(")
-			movie.Size = dl
+			dlRe := regexp.MustCompile(`(.*MB)\)`)
+			dlSize := dlRe.FindStringSubmatch(dl)
+			if len(dlSize) > 1 {
+				movie.Size = dlSize[1]
+			} else {
+				movie.Size = dl
+			}
 		}
 		if strings.HasSuffix(movie.Title, "Tags") {
 			movie.Title = strings.TrimSuffix(movie.Title, "Tags")
