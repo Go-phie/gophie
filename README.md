@@ -98,7 +98,7 @@ To create a new tag, use the make file
 make upgrade version=0.x.x
 ```
 
-The deployed API version from `gophie api` is available on [Heroku](https://deploy-gophie.herokuapp.com). Please read the API documentation for usage
+The deployed API version from `gophie api` is available on [Heroku](https://deploy-gophie.herokuapp.com). Please read the [API documentation](https://bisoncorps.stoplight.io/docs/gophie/reference/Gophie.v1.yaml) for usage
 
 ## License
 
