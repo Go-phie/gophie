@@ -19,7 +19,7 @@ type BestHDEngine struct {
 
 // NewBestHDEngine : A Movie Engine Constructor for BestHDEngine
 func NewBestHDEngine() *BestHDEngine {
-	base := "https://www.besthdmovies.top/"
+	base := "https://www.besthdmovies.fit/"
 	baseURL, err := url.Parse(base)
 	if err != nil {
 		log.Fatal(err)
@@ -90,7 +90,7 @@ func (engine *BestHDEngine) parseSingleMovie(el *colly.HTMLElement, index int) (
 }
 
 func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie) {
-	submissionDetails := make(map[string]string)
+	//  submissionDetails := make(map[string]string)
 	// Update movie download link if div.post-single-content  on page
 	downloadCollector.OnHTML("div.post-single-content", func(e *colly.HTMLElement) {
 		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
@@ -123,7 +123,8 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	})
 
 	downloadCollector.OnHTML("div.content-area", func(e *colly.HTMLElement) {
-		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
+		movieIndex := getMovieIndexFromCtx(e.Request)
+		movie := &(*movies)[movieIndex]
 		links := e.ChildAttrs("a", "href")
 		for _, link := range links {
 			if strings.HasPrefix(link, "https://zeefiles") || strings.HasPrefix(link, "http://zeefiles") {
@@ -131,6 +132,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 				if strings.HasPrefix(link, "http://") {
 					link = "https://" + strings.TrimPrefix(link, "http://")
 				}
+				link = link + "?movieIndex=" + strconv.Itoa(movieIndex)
 				downloadlink, err := url.Parse(link)
 				if err == nil {
 					movie.DownloadLink = downloadlink
@@ -145,21 +147,13 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	downloadCollector.OnHTML("div.freeDownload", func(e *colly.HTMLElement) {
 		movieIndex := getMovieIndexFromCtx(e.Request)
 		movie := &(*movies)[movieIndex]
-		zeesubmission := make(map[string]string)
 		if e.ChildAttr("a.link_button", "href") != "" {
 			downloadlink, err := url.Parse(e.ChildAttr("a.link_button", "href"))
 			if err == nil {
 				movie.DownloadLink = downloadlink
 			}
 		} else {
-
-			inputNames := e.ChildAttrs("input", "name")
-			inputValues := e.ChildAttrs("input", "value")
-
-			for index := range inputNames {
-				zeesubmission[inputNames[index]] = inputValues[index]
-			}
-
+			zeesubmission := getFormDetails(e)
 			err := downloadCollector.Post(movie.DownloadLink.String(), zeesubmission)
 			if err != nil {
 				log.Fatal(err)
@@ -172,21 +166,48 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 		var err error
 		movie := &(*movies)[movieIndex]
 		downloadlink := movie.DownloadLink
-		inputNames := e.ChildAttrs("input", "name")
-		inputValues := e.ChildAttrs("input", "value")
-
-		for index := range inputNames {
-			submissionDetails[inputNames[index]] = inputValues[index]
-		}
+		submissionDetails := getFormDetails(e)
 		requestlink := e.Request.URL.String()
 		if !(strings.HasPrefix(requestlink, "https://zeefiles") || strings.HasPrefix(requestlink, "http://zeefiles")) {
-			downloadlink, err = url.Parse("https://udown.me/watchonline/?movieIndex=" + strconv.Itoa(movieIndex))
+			downloadlink, err = url.Parse("https://freeload.best/downloading/?movieIndex=" + strconv.Itoa(movieIndex))
 			if err == nil {
 				movie.DownloadLink = downloadlink
 			}
 			err = downloadCollector.Post(downloadlink.String(), submissionDetails)
 			if err != nil {
 				log.Fatal(err)
+			}
+		}
+	})
+
+	downloadCollector.OnHTML("meta[http-equiv=refresh]", func(e *colly.HTMLElement) {
+		// Retrieve link when on freeload.best/downloading
+		movieIndex := getMovieIndexFromCtx(e.Request)
+		movie := &(*movies)[movieIndex]
+		content := e.Attr("content")
+		re := regexp.MustCompile(`url=(.*)`)
+		link := re.FindStringSubmatch(content)
+		if len(link) >= 1 {
+			downloadLink, _ := url.Parse(link[1])
+			movie.DownloadLink = downloadLink
+		}
+	})
+
+	downloadCollector.OnHTML("div.freeDownload", func(e *colly.HTMLElement) {
+		// Retrieve link when on zeefiles.download/id
+		movieIndex := getMovieIndexFromCtx(e.Request)
+		movie := &(*movies)[movieIndex]
+		linkButton := e.ChildAttr("a.link_button", "href")
+		if linkButton != "" {
+			movie.DownloadLink, _ = url.Parse(linkButton)
+		} else {
+			submissionDetails := getFormDetails(e)
+			downloadCollector.AllowURLRevisit = true
+			if !strings.Contains(movie.DownloadLink.String(), "download_token") {
+				err := downloadCollector.Post(movie.DownloadLink.String(), submissionDetails)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	})
