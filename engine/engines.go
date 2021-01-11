@@ -279,3 +279,15 @@ func getMovieIndexFromCtx(r *colly.Request) int {
 	}
 	return movieIndex
 }
+
+// Get all form details into a neat map
+func getFormDetails(element *colly.HTMLElement) map[string]string {
+	submission := make(map[string]string)
+	inputNames := element.ChildAttrs("input", "name")
+	inputValues := element.ChildAttrs("input", "value")
+
+	for index := range inputNames {
+		submission[inputNames[index]] = inputValues[index]
+	}
+	return submission
+}
