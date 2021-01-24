@@ -66,6 +66,7 @@ Usage:
 
 Available Commands:
   api         host gophie as an API on a PORT env variable, fallback to set argument
+  clear-cache Clears the Gophie Cache
   engines     Show summary and list of available engines
   help        Help about any command
   list        lists the recent movies by page number
@@ -75,13 +76,14 @@ Available Commands:
   version     Get Gophie Version
 
 Flags:
-  -e, --engine string       The Engine to use for querying and downloading (default "netnaija")
-  -h, --help                help for gophie
-  -o, --output-dir string   Path to download files to
-  -v, --verbose             Display Verbose logs
+  -c, --cache-dir string      The directory to store/lookup cache
+  -e, --engine string         The Engine to use for querying and downloading (default "netnaija")
+  -h, --help                  help for gophie
+  -o, --output-dir string     Path to download files to
+  -s, --selenium-url string   The URL of selenium instance to use
+  -v, --verbose               Display Verbose logs
 
 Use "gophie [command] --help" for more information about a command.
-
 
 Gophie - Bisoncorp (2020) (https://github.com/go-phie/gophie)
 ```

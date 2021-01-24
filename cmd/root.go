@@ -43,6 +43,8 @@ var (
 	seleniumURL string
 	// CacheDir: The Directory to store all colly files
 	cacheDir string
+	// Should Cache requests or not
+	ignoreCache bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -86,6 +88,7 @@ func init() {
 		&seleniumURL, "selenium-url", "s", "", "The URL of selenium instance to use")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Display Verbose logs")
 	rootCmd.PersistentFlags().StringVarP(&outputPath, "output-dir", "o", "", "Path to download files to")
+	rootCmd.PersistentFlags().BoolVar(&ignoreCache, "ignore-cache", false, "Ignore Cache and makes new requests")
 
 	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
@@ -93,6 +96,7 @@ func init() {
 	viper.BindPFlag("selenium-url", rootCmd.PersistentFlags().Lookup("selenium-url"))
 	viper.BindPFlag("output-dir", rootCmd.PersistentFlags().Lookup("output-dir"))
 	viper.BindPFlag("cache-dir", rootCmd.PersistentFlags().Lookup("cache-dir"))
+	viper.BindPFlag("ignore-cache", rootCmd.PersistentFlags().Lookup("ignore-cache"))
 
 }
 
@@ -114,10 +118,8 @@ func initConfig() {
 	}
 
 	// Configs From Env
-
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
 	viper.SetEnvPrefix("gophie") // will be uppercased automatically
 	viper.AutomaticEnv()         // read in environment variables that match
-
 }

@@ -57,16 +57,23 @@ func Scrape(engine Engine) ([]Movie, error) {
 	// Config Vars
 	//  seleniumURL := fmt.Sprintf("%s/wd/hub", viper.GetString("selenium-url"))
 	cacheDir := viper.GetString("cache-dir")
+	ignoreCache := viper.GetBool("ignore-cache")
 	var (
 		t   *transport.ChromeDpTransport
 		err error
+		c   *colly.Collector
 	)
 
-	c := colly.NewCollector(
-		// Cache responses to prevent multiple download of pages
-		// even if the collector is restarted
-		colly.CacheDir(cacheDir),
-	)
+	if ignoreCache {
+		c = colly.NewCollector()
+
+	} else {
+		c = colly.NewCollector(
+			// Cache responses to prevent multiple download of pages
+			// even if the collector is restarted
+			colly.CacheDir(cacheDir),
+		)
+	}
 
 	// Add Cloud Flare scraper bypasser
 	if engine.getName() == "NetNaija" {
