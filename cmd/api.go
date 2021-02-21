@@ -90,7 +90,7 @@ func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 		engine := r.URL.Query().Get("engine")
 		if engine == "" {
 			q := r.URL.Query()
-			q.Add("engine", "netnaija")
+			q.Add("engine", "fzmovies")
 			r.URL.RawQuery = q.Encode()
 		}
 		handler.ServeHTTP(w, r)

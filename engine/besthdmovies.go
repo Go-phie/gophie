@@ -169,7 +169,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 		submissionDetails := getFormDetails(e)
 		requestlink := e.Request.URL.String()
 		if !(strings.HasPrefix(requestlink, "https://zeefiles") || strings.HasPrefix(requestlink, "http://zeefiles")) {
-			downloadlink, err = url.Parse("https://freeload.best/downloading/?movieIndex=" + strconv.Itoa(movieIndex))
+			downloadlink, err = url.Parse("https://freeload.fun/downloading/?movieIndex=" + strconv.Itoa(movieIndex))
 			if err == nil {
 				movie.DownloadLink = downloadlink
 			}
@@ -181,7 +181,7 @@ func (engine *BestHDEngine) updateDownloadProps(downloadCollector *colly.Collect
 	})
 
 	downloadCollector.OnHTML("meta[http-equiv=refresh]", func(e *colly.HTMLElement) {
-		// Retrieve link when on freeload.best/downloading
+		// Retrieve link when on freeload.fun/downloading
 		movieIndex := getMovieIndexFromCtx(e.Request)
 		movie := &(*movies)[movieIndex]
 		content := e.Attr("content")
@@ -230,7 +230,6 @@ func (engine *BestHDEngine) List(page int) SearchResult {
 	pageParam := fmt.Sprintf("page/%v", strconv.Itoa(page))
 	engine.ListURL.Path = path.Join(engine.ListURL.Path, pageParam)
 	movies, err := Scrape(engine)
-	//  log.Debug(movies)
 	if err != nil {
 		log.Fatal(err)
 	}
