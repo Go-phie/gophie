@@ -1,7 +1,7 @@
 matrix:
   include:
     - language: go
-      go: 1.14.x
+      go: 1.16.x
       install: true
       script:
         - ./test.sh

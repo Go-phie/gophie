@@ -1,6 +1,6 @@
 module github.com/go-phie/gophie
 
-go 1.14
+go 1.16
 
 require (
 	github.com/bisoncorps/mplayer v0.0.0-20200330192254-e2f647162350
