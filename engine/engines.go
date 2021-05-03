@@ -39,13 +39,16 @@ type Engine interface {
 	Search(param ...string) SearchResult
 	List(page int) SearchResult
 	String() string
+
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie
+	// The input el is usually the block of code from the article specified in getParseAttrs
 	parseSingleMovie(el *colly.HTMLElement, index int) (Movie, error)
 
 	// getParseAttrs : get the attributes to use to parse a returned soup
 	// the first return string is the part of the html to be parsed e.g `body`, `main`
 	// the second return string is the attributes to be used in parsing the element specified
-	// by the first return
+	// by the first return. For example returning main, article.sr-one results in parsing the main
+	// tag and parsing all article.sr-one within the main html
 	getParseAttrs() (string, string, error)
 
 	// parseSingleMovie: parses the result of a colly HTMLElement and returns a movie

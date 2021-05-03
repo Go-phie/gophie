@@ -55,12 +55,12 @@ func init() {
 	rootCmd.AddCommand(searchCmd)
 }
 
-func searchPager(param ...string) {
+func searchPager(params ...string) {
 	selectedEngine, err := engine.GetEngine(viper.GetString("engine"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	selectedMovie := processSearch(selectedEngine, compResult, param...)
+	selectedMovie := processSearch(selectedEngine, compResult, params...)
 	// Start Movie Download
 	if len(selectedMovie.SDownloadLink) < 1 {
 		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
@@ -86,14 +86,14 @@ func searchPager(param ...string) {
 			Query:  selectedMovie.Title + " EPISODES",
 			Movies: movieArray,
 		}
-		selectedMovie = processSearch(selectedEngine, searchResult, param...)
+		selectedMovie = processSearch(selectedEngine, searchResult, params...)
 		if err = downloader.DownloadMovie(&selectedMovie, viper.GetString("output-dir")); err != nil {
 			log.Fatal(err)
 		}
 	}
 }
 
-func processSearch(e engine.Engine, retrievedResult engine.SearchResult, param ...string) engine.Movie {
+func processSearch(e engine.Engine, retrievedResult engine.SearchResult, params ...string) engine.Movie {
 	// Initialize process and show loader on terminal and store result in result
 	var (
 		choice      string
@@ -101,11 +101,12 @@ func processSearch(e engine.Engine, retrievedResult engine.SearchResult, param .
 		result      engine.SearchResult
 		items       []string
 	)
-	query := param[0]
-	if len(param) > 1 {
-		pageNum, _ = strconv.Atoi(param[1])
-		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(param...) })
+	query := params[0]
+	if len(params) > 1 {
+		pageNum, _ = strconv.Atoi(params[1])
+		result = ProcessFetchTask(func() engine.SearchResult { return e.Search(params...) })
 		items = append(result.Titles(), []string{">>> Next Page"}...)
+		log.Debug(result)
 		if pageNum != 1 {
 			items = append([]string{"<<< Previous Page"}, items...)
 		}

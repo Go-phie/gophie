@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"regexp"
@@ -63,11 +66,11 @@ func (engine *NetNaijaEngine) getParseAttrs() (string, string, error) {
 	// When in search mode, results are in <article class="result">
 	switch engine.mode {
 	case SearchMode:
-		article = "article.result"
+		article = "article.sr-one"
 		main = "main"
 	case ListMode:
-		main = "main.file-list"
-		article = "article.a-file"
+		main = "div.video-files"
+		article = "article.file-one"
 	default:
 		return "", "", fmt.Errorf("Invalid mode %v", engine.mode)
 	}
@@ -77,8 +80,8 @@ func (engine *NetNaijaEngine) getParseAttrs() (string, string, error) {
 func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movie, error) {
 	// movie title identifier
 	var title string
-	if title = "h3.file-name"; engine.mode == SearchMode {
-		title = "h3.result-title"
+	if title = "h2"; engine.mode == SearchMode {
+		title = "h3"
 	}
 
 	re := regexp.MustCompile(`\((.*)\)`)
@@ -101,8 +104,6 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, index int)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// download link is current link path + /download
-	downloadLink.Path = path.Join(downloadLink.Path, "download")
 
 	if strings.HasPrefix(downloadLink.Path, "/videos/series") {
 		movie.IsSeries = true
@@ -120,27 +121,68 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, index int)
 	return movie, nil
 }
 
+// SabiShare Token are usually in the URL in the form https://www.sabishare.com/file/<TOKEN>-<remaining-url>
+func (engine *NetNaijaEngine) getDownloadToken(sabiShareUrl string) string {
+	cleanUrl, _ := url.Parse(sabiShareUrl)
+	return strings.Split(strings.Split(cleanUrl.Path, "-")[0], "/")[2]
+}
+
 func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie) {
-	// Update movie size
-	downloadCollector.OnHTML("button[id=download-button]", func(e *colly.HTMLElement) {
-		(*movies)[getMovieIndexFromCtx(e.Request)].Size = strings.TrimSpace(e.ChildText("span.size"))
-	})
 
-	downloadCollector.OnHTML("h3.file-name", func(e *colly.HTMLElement) {
-		movieIndex := getMovieIndexFromCtx(e.Request)
-		movie := &((*movies)[movieIndex])
-		downloadLink, err := url.Parse(path.Join(strings.TrimSpace(e.ChildAttr("a", "href")), "download"))
-		if err != nil {
-			log.Fatal(err)
+	sabiShareAPI := "https://api.sabishare.com/token/download/"
+	sabiShareURL := ""
+
+	downloadCollector.OnHTML(`meta[property="og:url"]`, func(e *colly.HTMLElement) {
+		if sabiShareURL == "" && strings.Contains(e.Attr("href"), "sabishare") {
+			sabiShareURL = e.Attr("content")
 		}
-		movie.DownloadLink = downloadLink
-		// downloadCollector.Visit(e.ChildAttr("a", "href"))
-		ctx := colly.NewContext()
-		ctx.Put("movieIndex", strconv.Itoa(movieIndex))
-		downloadCollector.Request("GET", e.ChildAttr("a", "href"), nil, ctx, nil)
 	})
 
-	downloadCollector.OnHTML("div.video-about", func(e *colly.HTMLElement) {
+	downloadCollector.OnHTML("link[rel=canonical]", func(e *colly.HTMLElement) {
+		if sabiShareURL == "" && strings.Contains(e.Attr("href"), "sabishare") {
+			sabiShareURL = e.Attr("href")
+		}
+	})
+
+	downloadCollector.OnScraped(func(r *colly.Response) {
+		// Do this operation only when we are on the download page.
+		if strings.HasSuffix(r.Request.URL.Path, "download") {
+			movieIndex := getMovieIndexFromCtx(r.Request)
+			movie := &((*movies)[movieIndex])
+			// Start by setting the default downloadURL to the sabiShare URL
+			downloadUrl, _ := url.Parse(sabiShareURL)
+			movie.DownloadLink = downloadUrl
+
+			token := engine.getDownloadToken(sabiShareURL)
+			resp, err := http.Get(fmt.Sprintf("%s%s", sabiShareAPI, token))
+			if err == nil {
+				type DownloadResponse struct {
+					Status bool `json:"status"`
+					Data   struct {
+						URL string `json:"url"`
+					} `json:"data"`
+				}
+
+				var downloadResp DownloadResponse
+
+				defer resp.Body.Close()
+				body, err := io.ReadAll(resp.Body)
+				err = json.Unmarshal(body, &downloadResp)
+				if err == nil && downloadResp.Status {
+					downloadUrl, _ := url.Parse(downloadResp.Data.URL)
+					movie.DownloadLink = downloadUrl
+				}
+			}
+		}
+	})
+
+	// Update movie size
+	downloadCollector.OnHTML("div.file-size", func(e *colly.HTMLElement) {
+		(*movies)[getMovieIndexFromCtx(e.Request)].Size = strings.TrimSpace(e.ChildText("span.size-number"))
+	})
+
+	// Fetch Movie details from movie detail page
+	downloadCollector.OnHTML("article.post-body", func(e *colly.HTMLElement) {
 		movieIndex := getMovieIndexFromCtx(e.Request)
 		movie := &((*movies)[movieIndex])
 		description := e.ChildText("p")
@@ -153,15 +195,21 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			}
 
 			if len(descAndOthers) > 1 {
-				others := descAndOthers[1]
+				others := strings.ReplaceAll(descAndOthers[1], "\n", "")
+				log.Info(others)
 				categoryRe := regexp.MustCompile(`^(.*)Release Date:`)
+				releaseDateRe := regexp.MustCompile(`Release Date:(.*)Stars`)
 				starsRe := regexp.MustCompile(`Stars:(.*)Source:`)
 				imdbRe := regexp.MustCompile(`.*(https:\/\/www\.imdb.*)`)
 				categories := categoryRe.FindStringSubmatch(others)
+				releaseDate := releaseDateRe.FindStringSubmatch(others)
 				stars := starsRe.FindStringSubmatch(others)
 				imdb := imdbRe.FindStringSubmatch(others)
 				if len(categories) > 1 {
 					movie.Category = categories[1]
+				}
+				if len(releaseDate) > 1 {
+					movie.UploadDate = releaseDate[1]
 				}
 				if len(stars) > 1 {
 					movie.Cast = stars[1]
@@ -171,50 +219,15 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 				}
 			}
 		}
-		if !(strings.HasSuffix(movie.DownloadLink.String(), "/download") || strings.HasSuffix(movie.DownloadLink.String(), "?d=1")) {
-			downloadLink, err := url.Parse(path.Join(movie.DownloadLink.String(), "download"))
-			if err != nil {
-				log.Fatal(err)
-			}
-			movie.DownloadLink = downloadLink
-		}
-		if !strings.HasSuffix(movie.DownloadLink.String(), "?d=1") {
+
+		// Proceed to download movie
+		// If download suffix already exists, skip. It means this link has already been visited
+		if !strings.HasSuffix(movie.DownloadLink.Path, "download") {
+			// download link is current link path + /download
+			movie.DownloadLink.Path = path.Join(movie.DownloadLink.Path, "download")
 			ctx := colly.NewContext()
 			ctx.Put("movieIndex", strconv.Itoa(movieIndex))
 			downloadCollector.Request("GET", movie.DownloadLink.String(), nil, ctx, nil)
-		}
-	})
-
-	// Update movie download link if a[id=download] on page
-	downloadCollector.OnHTML("a[id=download]", func(e *colly.HTMLElement) {
-		movie := &((*movies)[getMovieIndexFromCtx(e.Request)])
-		movie.Size = strings.TrimSpace(e.ChildText("span[id=download-size]"))
-		downloadLink, err := url.Parse(e.Attr("href"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		movie.DownloadLink = downloadLink
-	})
-
-	// Update Download Link if "Direct Download" HTML on page
-	downloadCollector.OnHTML("div.row", func(e *colly.HTMLElement) {
-		var descLink string
-		movieIndex := getMovieIndexFromCtx(e.Request)
-		movie := &((*movies)[movieIndex])
-		if strings.TrimSpace(e.ChildText("label")) == "Direct Download" {
-			downloadLink, err := url.Parse(e.ChildAttr("input", "value"))
-			if err != nil {
-				log.Fatal(err)
-			}
-			if strings.HasSuffix(movie.DownloadLink.String(), "/download") {
-				descLink = strings.TrimSuffix(movie.DownloadLink.String(), "/download")
-			}
-			movie.DownloadLink = downloadLink
-			if movie.Description == "" {
-				ctx := colly.NewContext()
-				ctx.Put("movieIndex", strconv.Itoa(movieIndex))
-				downloadCollector.Request("GET", descLink, nil, ctx, nil)
-			}
 		}
 	})
 

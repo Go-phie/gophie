@@ -116,6 +116,8 @@ func (t *ChromeDpTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 	log.Debug("Set Headers for page ", r.URL.String())
 
+	// When `wait a moment` exists in the page, assume that's a cloudflare body
+	// and requery using chromeDP driver
 	if strings.Contains(strings.ToLower(string(respBody)), "wait a moment") {
 		log.Debug("Using ChromeDP driver")
 		// reuse baseCtx to create new context to reuse browser
