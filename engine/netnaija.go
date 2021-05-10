@@ -45,7 +45,7 @@ func NewNetNaijaEngine() *NetNaijaEngine {
 	netNaijaEngine.Name = "NetNaija"
 	netNaijaEngine.BaseURL = baseURL
 	netNaijaEngine.Description = `
-			Nigerian forum and media download center. 
+			Nigerian forum and media download center.
 			Developed and owned by Analike Emmanuel Bridge`
 	netNaijaEngine.SearchURL = searchURL
 	netNaijaEngine.ListURL = listURL
@@ -171,6 +171,7 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 				if err == nil && downloadResp.Status {
 					downloadUrl, _ := url.Parse(downloadResp.Data.URL)
 					movie.DownloadLink = downloadUrl
+					sabiShareURL = ""
 				}
 			}
 		}
