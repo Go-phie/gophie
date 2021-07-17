@@ -104,7 +104,7 @@ func (engine *FzEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movi
 
 func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie) {
 	// Update movie download link if ul.downloadlinks on page
-	downloadCollector.OnHTML("ul.moviesfiles", func(e *colly.HTMLElement) {
+	downloadCollector.OnHTML("ul.ptype", func(e *colly.HTMLElement) {
 		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
 		link := strings.Replace(e.ChildAttr("a", "href"), "download1.php", "download.php", 1)
 		downloadLink, err := url.Parse(e.Request.AbsoluteURL(link + "&pt=jRGarGzOo2"))
@@ -117,7 +117,7 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 		stringsub := re.FindStringSubmatch(e.ChildText("dcounter"))
 		if len(stringsub) > 0 {
 			dl := strings.TrimPrefix(stringsub[0], "(")
-			dlRe := regexp.MustCompile(`(.*MB)\)`)
+			dlRe := regexp.MustCompile(`(\d+ MB)`)
 			dlSize := dlRe.FindStringSubmatch(dl)
 			if len(dlSize) > 1 {
 				movie.Size = dlSize[1]
