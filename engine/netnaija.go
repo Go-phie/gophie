@@ -122,9 +122,9 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, index int)
 }
 
 // SabiShare Token are usually in the URL in the form https://www.sabishare.com/file/<TOKEN>-<remaining-url>
-func (engine *NetNaijaEngine) getDownloadToken(sabiShareUrl string) string {
-	cleanUrl, _ := url.Parse(sabiShareUrl)
-	return strings.Split(strings.Split(cleanUrl.Path, "-")[0], "/")[2]
+func (engine *NetNaijaEngine) getDownloadToken(sabiShareURL string) string {
+	cleanURL, _ := url.Parse(sabiShareURL)
+	return strings.Split(strings.Split(cleanURL.Path, "-")[0], "/")[2]
 }
 
 func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie) {
@@ -150,27 +150,27 @@ func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Colle
 			movieIndex := getMovieIndexFromCtx(r.Request)
 			movie := &((*movies)[movieIndex])
 			// Start by setting the default downloadURL to the sabiShare URL
-			downloadUrl, _ := url.Parse(sabiShareURL)
-			movie.DownloadLink = downloadUrl
+			downloadURL, _ := url.Parse(sabiShareURL)
+			movie.DownloadLink = downloadURL
 
 			token := engine.getDownloadToken(sabiShareURL)
-			resp, err := http.Get(fmt.Sprintf("%s%s", sabiShareAPI, token))
-			if err == nil {
-				type DownloadResponse struct {
-					Status bool `json:"status"`
-					Data   struct {
-						URL string `json:"url"`
-					} `json:"data"`
-				}
+			resp, tokenErr := http.Get(fmt.Sprintf("%s%s", sabiShareAPI, token))
+			type DownloadResponse struct {
+				Status int `json:"status"`
+				Data   struct {
+					URL string `json:"url"`
+				} `json:"data"`
+			}
 
-				var downloadResp DownloadResponse
+			var downloadResp DownloadResponse
 
-				defer resp.Body.Close()
-				body, err := io.ReadAll(resp.Body)
-				err = json.Unmarshal(body, &downloadResp)
-				if err == nil && downloadResp.Status {
-					downloadUrl, _ := url.Parse(downloadResp.Data.URL)
-					movie.DownloadLink = downloadUrl
+			defer resp.Body.Close()
+			body, err := io.ReadAll(resp.Body)
+			err = json.Unmarshal(body, &downloadResp)
+			if tokenErr == nil {
+				if err == nil && downloadResp.Status == 200 {
+					downloadURL, _ := url.Parse(downloadResp.Data.URL)
+					movie.DownloadLink = downloadURL
 					sabiShareURL = ""
 				}
 			}
