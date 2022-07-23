@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -108,7 +109,10 @@ func initConfig() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
+	// Fix: Download on Windows
+	if runtime.GOOS == "windows" {
+		home = strings.ReplaceAll(home, "\\", "/")
+	}
 	// Defaults for Gophie Configs
 	viper.SetDefault("selenium-url", "http://localhost:4444")
 	viper.SetDefault("output-dir", path.Join(home, "Downloads", "Gophie"))
@@ -116,7 +120,6 @@ func initConfig() {
 	if err := os.MkdirAll(viper.GetString("cache-dir"), os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
-
 	// Configs From Env
 	replacer := strings.NewReplacer("-", "_")
 	viper.SetEnvKeyReplacer(replacer)
