@@ -15,6 +15,7 @@ import (
 // Nkiri : An Engine for  Nkiri
 type NkiriEngine struct {
 	Props
+	ListCategories []string
 }
 
 // NewNkiriEngine : A Movie Engine Constructor for Nkiri
@@ -42,6 +43,13 @@ func NewNkiriEngine() *NkiriEngine {
 	nkiriEngine.Description = `Nkiri is an entertainment website where you can download Hollywood, Korean, Chinese and other movies, TV Series and Dramas freely and easily.`
 	nkiriEngine.SearchURL = searchURL
 	nkiriEngine.ListURL = listURL
+	nkiriEngine.ListCategories = []string{
+		"international",
+		"african",
+		"asian-movies/download-bollywood-movies",
+		"asian-movies/download-korean-movies",
+		"asian-movies/download-philippine-movies",
+	}
 	return &nkiriEngine
 }
 
@@ -55,7 +63,6 @@ func (engine *NkiriEngine) getParseAttrs() (string, string, error) {
 		article string
 		main    string
 	)
-	// When in search mode, results are in <article class="result">
 	switch engine.mode {
 	case SearchMode:
 		article = "article"
@@ -71,7 +78,11 @@ func (engine *NkiriEngine) getParseAttrs() (string, string, error) {
 
 func (engine *NkiriEngine) parseSingleMovie(el *colly.HTMLElement, index int) (Movie, error) {
 	// movie title identifier
-	re := regexp.MustCompile(`\((.*)\)`)
+	yearRe := regexp.MustCompile(`\((.*)\)`)
+	removeCaratRe, err := regexp.Compile(`[^\w()]`)
+	if err != nil {
+		log.Fatal(err)
+	}
 	movie := Movie{
 		Index:    index,
 		IsSeries: false,
@@ -81,15 +92,12 @@ func (engine *NkiriEngine) parseSingleMovie(el *colly.HTMLElement, index int) (M
 	// Split with '|': Title at Index 0
 	titleSplit := strings.Split(el.ChildText("h2"), " | ")
 	if len(titleSplit) >= 1 {
-		movie.Title = strings.TrimSpace(
-			strings.ReplaceAll(
-				titleSplit[0], ":", "_"))
-		movie.Category = strings.TrimPrefix(titleSplit[1], "Download") //TrimSuffix Movies
+		movie.Title = removeCaratRe.ReplaceAllString(titleSplit[0], "_")
+		movie.Category = strings.TrimSuffix(strings.TrimPrefix(titleSplit[1], "Download"), "Movie")
 	}
 	//Fetch UploadDate for ListMode Items
 	if engine.mode == ListMode {
 		movie.UploadDate = strings.TrimSpace(el.ChildText("div.blog-entry-date"))
-		//movie.Category = strings.TrimSpace(el.ChildText("div.blog-entry-category"))
 	}
 	//Fetch DownloadLink
 	downloadLink, err := url.Parse(el.ChildAttr("a", "href"))
@@ -98,7 +106,7 @@ func (engine *NkiriEngine) parseSingleMovie(el *colly.HTMLElement, index int) (M
 	}
 	movie.DownloadLink = downloadLink
 	if movie.Title != "" {
-		year := re.FindStringSubmatch(movie.Title)
+		year := yearRe.FindStringSubmatch(movie.Title)
 		if len(year) > 1 {
 			intYear, err := strconv.Atoi(year[1])
 			if err == nil {
@@ -111,50 +119,51 @@ func (engine *NkiriEngine) parseSingleMovie(el *colly.HTMLElement, index int) (M
 
 func (engine *NkiriEngine) updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie) {
 	sizeRe := regexp.MustCompile(`(\d.*)`)
-	//Fetch DownloadLink for series
-	downloadCollector.OnHTML("div[data-elementor-type=wp-post]", func(e *colly.HTMLElement) {
-		movieIndex := getMovieIndexFromCtx(e.Request)
-		movie := &((*movies)[movieIndex])
-		movie.IsSeries = true
-		seriesMap := map[string]*url.URL{}
-		e.ForEach("section.elementor-section", func(n int, inner *colly.HTMLElement) {
-			if strings.HasPrefix(inner.ChildText("a"), "Download Episode") {
-				downloadLink, err := url.Parse(inner.Attr("href"))
-				if err != nil {
-					log.Fatal(err)
-				}
-				seriesMap[strconv.Itoa(n)] = downloadLink
-			}
-		})
-		movie.SDownloadLink = seriesMap
-	})
-	// Fetch Movie details from movie details / downloadlink
 	downloadCollector.OnHTML("div.elementor-section-wrap", func(e *colly.HTMLElement) {
 		movieIndex := getMovieIndexFromCtx(e.Request)
 		movie := &((*movies)[movieIndex])
+		seriesMap := map[string]*url.URL{}
+		episode := 0
+		nextSection := false
 		e.ForEach("section.elementor-section", func(n int, inner *colly.HTMLElement) {
+			switch {
+			//Fetch Download Link For Series
+			case strings.HasPrefix(inner.ChildText("span.elementor-button-text"), "Download Episode"):
+				episode++
+				downloadLink, err := url.Parse(inner.ChildAttr("div.elementor-button-wrapper > a", "href"))
+				if err != nil {
+					log.Fatal(err)
+				}
+				seriesMap[strconv.Itoa(episode)] = downloadLink
+			//Fetch DownloadLink For Movies
+			case strings.HasPrefix(inner.ChildText("span.elementor-button-text"), "Download Movie"):
+				downloadLink, err := url.Parse(inner.ChildAttr("div.elementor-button-wrapper > a", "href"))
+				if err != nil {
+					log.Fatal(err)
+				}
+				movie.DownloadLink = downloadLink
+			}
 			//Update movie size
 			if strings.HasPrefix(inner.ChildText("span.elementor-alert-title"), "Download Size") {
 				sizeMatch := sizeRe.FindStringSubmatch(
 					strings.TrimSpace(
 						inner.ChildText("span.elementor-alert-description")))
 				if len(sizeMatch) >= 1 {
-					movie.Size = sizeMatch[0]
+					movie.Size = strings.TrimSpace(sizeMatch[0])
 				}
 			}
 			//Fetch Movie Description
-			if inner.Attr("div.nkiri-content_9") != "" && inner.Attr("div.nkiri-content_4") != "" {
+			if strings.HasPrefix(inner.ChildText("div.elementor-container"), "Synopsis") {
+				nextSection = true
+			} else if nextSection {
 				movie.Description = inner.ChildText("p")
-			}
-			//Fetch DownloadLink For Movies
-			if strings.HasPrefix(inner.ChildText("a"), "Download Movie") {
-				downloadLink, err := url.Parse(inner.ChildAttr("a", "href"))
-				if err != nil {
-					log.Fatal(err)
-				}
-				movie.DownloadLink = downloadLink
+				nextSection = false
 			}
 		})
+		if len(seriesMap) > 0 {
+			movie.IsSeries = true
+			movie.SDownloadLink = seriesMap
+		}
 	})
 }
 
@@ -165,16 +174,10 @@ func (engine *NkiriEngine) List(page int) SearchResult {
 		Query: "List of Recent Uploads - Page " + strconv.Itoa(page),
 	}
 	pageParam := fmt.Sprintf("page/%v", strconv.Itoa(page))
-	categories := [5]string{
-		"international",
-		"african",
-		"asian-movies/download-bollywood-movies",
-		"asian-movies/download-korean-movies",
-		"asian-movies/download-philippine-movies"}
 	movies := []Movie{}
-	listPath := engine.ListURL.Path
-	for _, category := range categories {
-		engine.ListURL.Path = path.Join(listPath, category, pageParam)
+	listCategoryPath := engine.ListURL.Path
+	for _, category := range engine.ListCategories {
+		engine.ListURL.Path = path.Join(listCategoryPath, category, pageParam)
 		listResult, err := Scrape(engine)
 		if err != nil {
 			log.Fatal(err)
