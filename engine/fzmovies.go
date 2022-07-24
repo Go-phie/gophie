@@ -108,7 +108,6 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
 		link := strings.Replace(e.ChildAttr("a", "href"), "download1.php", "download.php", 1)
 		downloadLink, err := url.Parse(e.Request.AbsoluteURL(link + "&pt=jRGarGzOo2"))
-		//    downloadLink, err := url.Parse(e.ChildAttr("a", "href") + "&pt=jRGarGzOo2")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -131,9 +130,23 @@ func (engine *FzEngine) updateDownloadProps(downloadCollector *colly.Collector, 
 		downloadCollector.Visit(downloadLink.String())
 	})
 
+	downloadCollector.OnHTML("ul.downloadlinks", func(e *colly.HTMLElement) {
+		movie := &(*movies)[getMovieIndexFromCtx(e.Request)]
+		links := e.ChildAttrs("a", "href")
+		if len(links) > 1 {
+			downloadLink, err := url.Parse(e.Request.AbsoluteURL(links[len(links)-1]))
+			if err != nil {
+				log.Fatal(err)
+			}
+			movie.DownloadLink = downloadLink
+			downloadCollector.Visit(downloadLink.String())
+		}
+	})
+
 	// Update Download Link if "Download" HTML on page
 	downloadCollector.OnHTML("input[name=download1]", func(e *colly.HTMLElement) {
-		if strings.HasSuffix(strings.TrimSpace(e.Attr("value")), "mp4") {
+		trimmedValue := strings.TrimSpace(e.Attr("value"))
+		if strings.HasSuffix(trimmedValue, "mp4") || strings.HasSuffix(trimmedValue, "mp4?fromwebsite") {
 			downloadLink, err := url.Parse(e.Request.AbsoluteURL(e.Attr("value")))
 			if err != nil {
 				log.Fatal(err)
