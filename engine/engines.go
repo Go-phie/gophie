@@ -269,6 +269,7 @@ func GetEngines() map[string]Engine {
 	engines["animeout"] = NewAnimeOutEngine()
 	engines["takanimelist"] = NewTakanimeListEngine()
 	engines["kdramahood"] = NewKDramaHoodEngine()
+	engines["nkiri"] = NewNkiriEngine()
 	return engines
 }
 

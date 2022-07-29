@@ -26,6 +26,7 @@ Gophie is a tool to help you search, stream and download movies from movie sites
 - FzMovies
 - BestHD
 - CoolMoviez
+- Nkiri
 
 ### Series
 
