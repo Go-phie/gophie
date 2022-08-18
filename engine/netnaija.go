@@ -124,7 +124,9 @@ func (engine *NetNaijaEngine) parseSingleMovie(el *colly.HTMLElement, index int)
 // SabiShare Token are usually in the URL in the form https://www.sabishare.com/file/<TOKEN>-<remaining-url>
 func (engine *NetNaijaEngine) getDownloadToken(sabiShareURL string) string {
 	cleanURL, _ := url.Parse(sabiShareURL)
-	return strings.Split(strings.Split(cleanURL.Path, "-")[0], "/")[2]
+	partsSplitByDash := strings.Split(cleanURL.Path, "-")[0]
+	partsSplitBySlash := strings.Split(partsSplitByDash, "/")
+	return partsSplitBySlash[len(partsSplitBySlash)-1]
 }
 
 func (engine *NetNaijaEngine) updateDownloadProps(downloadCollector *colly.Collector, movies *[]Movie) {
