@@ -46,6 +46,8 @@ var (
 	cacheDir string
 	// Should Cache requests or not
 	ignoreCache bool
+	// use Chrome Driver
+	useChromeDriver bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -90,6 +92,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Display Verbose logs")
 	rootCmd.PersistentFlags().StringVarP(&outputPath, "output-dir", "o", "", "Path to download files to")
 	rootCmd.PersistentFlags().BoolVar(&ignoreCache, "ignore-cache", false, "Ignore Cache and makes new requests")
+	rootCmd.PersistentFlags().BoolVar(&useChromeDriver, "use-chrome-driver", false, "Use Selenium Driver")
 
 	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
 	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
@@ -98,7 +101,7 @@ func init() {
 	viper.BindPFlag("output-dir", rootCmd.PersistentFlags().Lookup("output-dir"))
 	viper.BindPFlag("cache-dir", rootCmd.PersistentFlags().Lookup("cache-dir"))
 	viper.BindPFlag("ignore-cache", rootCmd.PersistentFlags().Lookup("ignore-cache"))
-
+	viper.BindPFlag("use-chrome-driver", rootCmd.PersistentFlags().Lookup("use-chrome-driver"))
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -78,8 +78,9 @@ func Scrape(engine Engine) ([]Movie, error) {
 		)
 	}
 
+	useChromeDriver := viper.GetBool("use-chrome-driver")
 	// Add Cloud Flare scraper bypasser
-	if engine.getName() == "NetNaija" {
+	if useChromeDriver && engine.getName() == "NetNaija" {
 		log.Debug("Switching to ChromeDpTransport")
 		t, err = transport.NewChromeDpTransport(http.DefaultTransport)
 		if err != nil {
@@ -90,7 +91,7 @@ func Scrape(engine Engine) ([]Movie, error) {
 	}
 	// Close the WebDriver Instance
 	defer func() {
-		if engine.getName() == "NetNaija" {
+		if useChromeDriver && engine.getName() == "NetNaija" {
 			t.RemoteAllocCancel()
 			t.Cancel()
 		}
