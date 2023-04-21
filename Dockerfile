@@ -10,5 +10,5 @@ RUN go build -o /gophie
 # deploy stage
 FROM alpine:latest
 COPY --from=builder /gophie /gophie 
-CMD [ "./gophie","api","-p","3000" ]
 EXPOSE 3000
+CMD [ "./gophie","api","-p","3000" ]
