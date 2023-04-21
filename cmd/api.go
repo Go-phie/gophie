@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,12 +18,9 @@ package cmd
 import (
 	"encoding/json"
 	"html/template"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/handlers"
 	log "github.com/sirupsen/logrus"
@@ -34,51 +31,10 @@ import (
 
 var (
 	port string
-	// WhiteListedHosts Array of IPs and Hosts allowed to access the server
-	WhiteListedHosts []string
 )
 
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-}
-
-// extractToken : Get Token from Request
-func extractToken(r *http.Request) string {
-	bearToken := r.Header.Get("Authorization")
-	//normally Authorization the_token_xxx
-	strArr := strings.Split(bearToken, " ")
-	if len(strArr) == 2 {
-		return strArr[1]
-	}
-	return ""
-}
-
-func isValidRemote(r *http.Request) bool {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if os.Getenv("WHITE_LISTED_HOSTS") != "" {
-		WhiteListedHosts = strings.Split(os.Getenv("WHITE_LISTED_HOSTS"), ",")
-	}
-
-	originURL, _ := url.Parse(r.Header.Get("Origin"))
-	refererURL, _ := url.Parse(r.Header.Get("Referer"))
-
-	return (err == nil && (contains(WhiteListedHosts, ip)) ||
-		(originURL.Host != "" && contains(WhiteListedHosts, originURL.Host)) ||
-		refererURL.Host != "" && contains(WhiteListedHosts, refererURL.Host))
-}
-
-func authenticateRequest(handler http.HandlerFunc) http.HandlerFunc {
-	accessToken := os.Getenv("ACCESS_SECRET")
-	return func(w http.ResponseWriter, r *http.Request) {
-		requestToken := extractToken(r)
-		// It's Either you have accessToken set
-		// Or you don't have it set but have remoteURL config set
-		if isValidRemote(r) || requestToken == accessToken {
-			handler.ServeHTTP(w, r)
-		} else {
-			accessDeniedHandler(w, r)
-		}
-	}
 }
 
 func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
@@ -86,7 +42,7 @@ func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 		enableCors(&w)
 		w.Header().Add("Content-Type", "application/json")
 
-		// Set Default Engine to NetNaija
+		// Set Default Engine to fzmovies
 		engine := r.URL.Query().Get("engine")
 		if engine == "" {
 			q := r.URL.Query()
@@ -95,11 +51,6 @@ func getDefaultsMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 		}
 		handler.ServeHTTP(w, r)
 	}
-}
-
-func accessDeniedHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Unauthorized Access", http.StatusUnauthorized)
-	return
 }
 
 // DocHandler : renders iframe pointing to hosted docs
@@ -232,8 +183,8 @@ var apiCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		r := http.NewServeMux()
-		r.HandleFunc("/search", authenticateRequest(getDefaultsMiddleware(SearchHandler)))
-		r.HandleFunc("/list", authenticateRequest(getDefaultsMiddleware(ListHandler)))
+		r.HandleFunc("/search", getDefaultsMiddleware(SearchHandler))
+		r.HandleFunc("/list", getDefaultsMiddleware(ListHandler))
 		r.HandleFunc("/engine", EngineHandler)
 		r.HandleFunc("/", DocHandler)
 

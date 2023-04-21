@@ -12,3 +12,4 @@ gophie_cache
 downloadList.json
 Gophie_Downloads
 gophie.env
+.env
