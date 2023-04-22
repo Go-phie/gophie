@@ -17,4 +17,5 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
 	github.com/tebeka/selenium v0.9.9
+	golang.org/x/sys v0.3.0 // indirect
 )
